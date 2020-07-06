@@ -46,7 +46,9 @@ class ArchiveAll extends Command
         $this->call("archive:retention", ['--date' => $date]);
 
         //每日归档提现数据
-        $this->call("archive:withdraw", ['--date' => $date]);
+        // $this->call("archive:withdraw", ['--date' => $date]);
+        $this->call("archive:withdraw", ['--date' => $date, 'type' => 'like']);
+        $this->call("archive:withdraw", ['--date' => $date, 'type' => 'post']);
 
     }
 

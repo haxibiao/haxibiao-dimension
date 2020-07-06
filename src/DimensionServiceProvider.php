@@ -6,6 +6,7 @@ use Haxibiao\Dimension\Console\ArchiveAll;
 use Haxibiao\Dimension\Console\ArchiveRetention;
 use Haxibiao\Dimension\Console\ArchiveUser;
 use Haxibiao\Dimension\Console\ArchiveWithdraw;
+use Haxibiao\Dimension\Console\InstallCommand;
 use Illuminate\Support\ServiceProvider;
 
 class DimensionServiceProvider extends ServiceProvider
