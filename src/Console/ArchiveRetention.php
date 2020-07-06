@@ -2,9 +2,9 @@
 
 namespace Haxibiao\Dimension\Console;
 
-use App\User;
-use App\UserRetention;
 use Carbon\Carbon;
+use Haxibiao\Base\User;
+use Haxibiao\Base\UserRetention;
 use Haxibiao\Dimension\Dimension;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\DB;
