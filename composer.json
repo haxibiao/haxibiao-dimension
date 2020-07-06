@@ -1,0 +1,32 @@
+{
+    "name": "haxibiao/dimension",
+    "description": "哈希表维度系统",
+    "type": "project",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "ivan",
+            "email": "ivan@haxibiao.com"
+        }
+    ],
+    "require": {},
+    "repositories": {},
+    "minimum-stability": "dev",
+    "autoload": {
+        "psr-0": {
+            "Haxibiao\\Dimension\\": "src/"
+        }
+    },
+    "autoload-dev": {
+        "classmap": [
+            "tests/"
+        ]
+    },
+    "extra": {
+        "laravel": {
+            "providers": [
+                "Haxibiao\\Dimension\\DimensionServiceProvider"
+            ]
+        }
+    }
+}
