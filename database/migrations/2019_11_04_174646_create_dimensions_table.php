@@ -13,6 +13,9 @@ class CreateDimensionsTable extends Migration
      */
     public function up()
     {
+        //部分项目已存在 dimensions 表，但是引入 package/dimensions 以它的是数据库迁移文件为主
+        Schema::dropIfExists('dimensions');
+        
         Schema::create('dimensions', function (Blueprint $table) {
             $table->increments('id');
             $table->unsignedInteger('user_id')->nullable()->index()->comment('统计的用户');
