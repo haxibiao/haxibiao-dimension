@@ -1,6 +1,6 @@
 <?php
 
-namespace Haxibiao\Dimension;
+namespace App;
 
 use Haxibiao\Dimension\Dimension as BaseDimension;
 
