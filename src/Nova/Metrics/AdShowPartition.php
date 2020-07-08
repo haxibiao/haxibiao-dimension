@@ -8,7 +8,7 @@ use Laravel\Nova\Metrics\Partition;
 
 class AdShowPartition extends Partition
 {
-    public $name = '广告展示分布 (本周)';
+    public $name = '广告展示分布 (今日)';
     /**
      * Calculate the value of the metric.
      *
@@ -18,7 +18,7 @@ class AdShowPartition extends Partition
     public function calculate(Request $request)
     {
         $qb = Dimension::whereGroup('广告展示')
-            ->where('date', '>', today()->subWeek()->toDateString());
+            ->where('date', '>', today()->toDateString());
         return $this->sum($request, $qb, 'value', 'name');
     }
 

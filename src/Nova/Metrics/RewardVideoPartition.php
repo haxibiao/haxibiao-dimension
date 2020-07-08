@@ -8,7 +8,7 @@ use Laravel\Nova\Metrics\Partition;
 
 class RewardVideoPartition extends Partition
 {
-    public $name = '激励视频分布 (本周)';
+    public $name = '激励视频分布 (今日)';
     /**
      * Calculate the value of the metric.
      *
@@ -18,7 +18,7 @@ class RewardVideoPartition extends Partition
     public function calculate(Request $request)
     {
         $qb = Dimension::whereGroup('激励视频')
-            ->where('date', '>', today()->subWeek()->toDateString());
+            ->where('date', '>', today()->subDay()->toDateString());
         return $this->sum($request, $qb, 'value', 'name');
     }
 
