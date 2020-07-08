@@ -18,7 +18,7 @@ class RewardVideoPartition extends Partition
     public function calculate(Request $request)
     {
         $qb = Dimension::whereGroup('激励视频')
-            ->where('date', '>', today()->subDay()->toDateString());
+            ->where('date', '>=', today()->toDateString());
         return $this->sum($request, $qb, 'value', 'name');
     }
 

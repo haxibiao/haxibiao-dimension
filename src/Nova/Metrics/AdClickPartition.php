@@ -18,7 +18,7 @@ class AdClickPartition extends Partition
     public function calculate(Request $request)
     {
         $qb = Dimension::whereGroup('广告点击')
-            ->where('date', '>', today()->toDateString());
+            ->where('date', '>=', today()->toDateString());
         return $this->sum($request, $qb, 'value', 'name');
     }
 

@@ -18,7 +18,7 @@ class AdShowPartition extends Partition
     public function calculate(Request $request)
     {
         $qb = Dimension::whereGroup('广告展示')
-            ->where('date', '>', today()->toDateString());
+            ->where('date', '>=', today()->toDateString());
         return $this->sum($request, $qb, 'value', 'name');
     }
 
