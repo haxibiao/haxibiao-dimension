@@ -82,9 +82,11 @@ class ArchiveRetention extends Command
             $next_day_key_registed_at = $date->subDay(1);
             $newRegistedNum           = User::whereDate('created_at', $next_day_key_registed_at)->count();
             $userRetentionNum         = UserRetention::whereDate('day2_at', $next_day_key_registed_at)->count();
-            $next_day_result          = sprintf('%.2f', ($userRetentionNum / $newRegistedNum) * 100);
-            cache()->store('database')->forever($next_day_key, $next_day_result);
-            echo $next_day_result;
+            if(0 != $userRetentionNum) {
+                $next_day_result          = sprintf('%.2f', ($userRetentionNum / $newRegistedNum) * 100);
+                cache()->store('database')->forever($next_day_key, $next_day_result);
+                echo $next_day_result;
+            }
         }
 
         //三日留存率
@@ -96,9 +98,11 @@ class ArchiveRetention extends Command
             $third_day_registed_at = $date->subDay(3);
             $newRegistedNum        = User::whereDate('created_at', $third_day_registed_at)->count();
             $userRetentionNum      = UserRetention::whereDate('day3_at', $third_day_registed_at)->count();
-            $third_day_result      = sprintf('%.2f', ($userRetentionNum / $newRegistedNum) * 100);
-            cache()->store('database')->forever($third_day_key, $third_day_result);
-            echo $third_day_result;
+            if (0 != $userRetentionNum) {
+                $third_day_result      = sprintf('%.2f', ($userRetentionNum / $newRegistedNum) * 100);
+                cache()->store('database')->forever($third_day_key, $third_day_result);
+                echo $third_day_result;
+            }
         }
 
         //五日留存率
@@ -110,9 +114,11 @@ class ArchiveRetention extends Command
             $fifth_day_registed_at = $date->subDay(5);
             $newRegistedNum        = User::whereDate('created_at', $fifth_day_registed_at)->count();
             $userRetentionNum      = UserRetention::whereDate('day5_at', $fifth_day_registed_at)->count();
-            $fifth_day_result      = sprintf('%.2f', ($userRetentionNum / $newRegistedNum) * 100);
-            cache()->store('database')->forever($fifth_day_key, $fifth_day_result);
-            echo $fifth_day_result;
+            if (0 != $userRetentionNum) {
+                $fifth_day_result      = sprintf('%.2f', ($userRetentionNum / $newRegistedNum) * 100);
+                cache()->store('database')->forever($fifth_day_key, $fifth_day_result);
+                echo $fifth_day_result;
+            }
         }
 
         // 七日留存率
@@ -124,9 +130,11 @@ class ArchiveRetention extends Command
             $sixth_day_registed_at = $date->subDay(7);
             $newRegistedNum        = User::whereDate('created_at', $sixth_day_registed_at)->count();
             $userRetentionNum      = UserRetention::whereDate('day7_at', $sixth_day_registed_at)->count();
-            $sixth_day_result      = sprintf('%.2f', ($userRetentionNum / $newRegistedNum) * 100);
-            cache()->store('database')->forever($sixth_day_key, $sixth_day_result);
-            echo $sixth_day_result;
+            if (0 != $userRetentionNum) {
+                $sixth_day_result      = sprintf('%.2f', ($userRetentionNum / $newRegistedNum) * 100);
+                cache()->store('database')->forever($sixth_day_key, $sixth_day_result);
+                echo $sixth_day_result;
+            }
         }
 
         // 十五日留存率
@@ -138,9 +146,11 @@ class ArchiveRetention extends Command
             $sixth_day_registed_at = $date->subDay(15);
             $newRegistedNum        = User::whereDate('created_at', $sixth_day_registed_at)->count();
             $userRetentionNum      = UserRetention::whereDate('day15_at', $sixth_day_registed_at)->count();
-            $sixth_day_result      = sprintf('%.2f', ($userRetentionNum / $newRegistedNum) * 100);
-            cache()->store('database')->forever($sixth_day_key, $sixth_day_result);
-            echo $sixth_day_result;
+            if(0 != $userRetentionNum) {
+                $fifteen_day_result      = sprintf('%.2f', ($userRetentionNum / $newRegistedNum) * 100);
+                cache()->store('database')->forever($sixth_day_key, $fifteen_day_result);
+                echo $fifteen_day_result;
+            }
         }
 
         //三十日留存率
@@ -151,9 +161,11 @@ class ArchiveRetention extends Command
             $month_registed_at = $date->subDay(30);
             $newRegistedNum    = User::whereDate('created_at', $month_registed_at)->count();
             $userRetentionNum  = UserRetention::whereDate('day30_at', $month_registed_at)->count();
-            $month_result      = sprintf('%.2f', ($userRetentionNum / $newRegistedNum) * 100);
-            cache()->store('database')->forever($month_key, $month_result);
-            echo $month_result;
+            if (0 != $userRetentionNum) {
+                $month_result      = sprintf('%.2f', ($userRetentionNum / $newRegistedNum) * 100);
+                cache()->store('database')->forever($month_key, $month_result);
+                echo $month_result;
+            }
         }
     }
 
@@ -291,7 +303,7 @@ class ArchiveRetention extends Command
 
     /**
      * 计算十五天留存用户信息
-     * 
+     *
      * note:支撑留存未提现 与 提现已流失 用户数据分析
      */
     public function fifteenDayKeepUser(String $date)
@@ -300,7 +312,7 @@ class ArchiveRetention extends Command
         $day   = Carbon::parse($date);
         $day1  = (clone $day)->subDay(1)->toDateString();
         $day15 = (clone $day)->subDay(15)->toDateString();
-        $dates = [$day15, $day1]; 
+        $dates = [$day15, $day1];
 
         $qb_new_users = DB::table('users')
             ->join('user_profiles', 'users.id', '=', 'user_profiles.user_id')
