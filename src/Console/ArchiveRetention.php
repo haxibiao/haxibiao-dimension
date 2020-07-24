@@ -129,6 +129,20 @@ class ArchiveRetention extends Command
             echo $sixth_day_result;
         }
 
+        // 十五日留存率
+        echo "\n - 十五日留存率 ";
+
+        $date          = clone $endOfDay;
+        $sixth_day_key = 'day15_at_' . $date->toDateString();
+        if (!cache()->store('database')->get($sixth_day_key)) {
+            $sixth_day_registed_at = $date->subDay(15);
+            $newRegistedNum        = User::whereDate('created_at', $sixth_day_registed_at)->count();
+            $userRetentionNum      = UserRetention::whereDate('day15_at', $sixth_day_registed_at)->count();
+            $sixth_day_result      = sprintf('%.2f', ($userRetentionNum / $newRegistedNum) * 100);
+            cache()->store('database')->forever($sixth_day_key, $sixth_day_result);
+            echo $sixth_day_result;
+        }
+
         //三十日留存率
         echo "\n - 三十日留存率 ";
         $date      = clone $endOfDay;
@@ -209,7 +223,7 @@ class ArchiveRetention extends Command
     }
 
     /**
-     * 计算次日流失用户信息，如平均智慧点 (每日凌晨统计，前一日的)
+     * 计算次日留存用户信息，如平均智慧点 (每日凌晨统计，前一日的)
      *
      * @return void
      */
@@ -273,6 +287,28 @@ class ArchiveRetention extends Command
         $dimension->save();
         echo '次日留存用户 - 最高答题数:' . $max_answers_count . ' 日期:' . $date . "\n";
 
+    }
+
+    /**
+     * 计算十五天留存用户信息
+     * 
+     * note:支撑留存未提现 与 提现已流失 用户数据分析
+     */
+    public function fifteenDayKeepUser(String $date)
+    {
+        //指定日期15天前留存用户
+        $day   = Carbon::parse($date);
+        $day1  = (clone $day)->subDay(1)->toDateString();
+        $day15 = (clone $day)->subDay(15)->toDateString();
+        $dates = [$day15, $day1]; 
+
+        $qb_new_users = DB::table('users')
+            ->join('user_profiles', 'users.id', '=', 'user_profiles.user_id')
+            ->join('user_retentions', 'users.id', '=', 'user_retentions.user_id')
+            ->whereBetween('users.created_at', $dates);
+
+        //计算15日后的留存逻辑
+        $qb_second_day = $qb_new_users->whereNull('user_retentions');
     }
 
 }
