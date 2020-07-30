@@ -178,19 +178,13 @@ class ArchiveRetention extends Command
     {
         //注意：留存都是看前一天的
         $day   = Carbon::parse($date);
-        $day1  = (clone $day)->subDay(2)->toDateString();
-        $day2  = (clone $day)->subDay(3)->toDateString();
+        $day1  = (clone $day)->subDay(1)->toDateString();
+        $day2  = (clone $day)->subDay(2)->toDateString();
         $dates = [$day2, $day1];
 
-        $qb_new_users = DB::table('users')
-            ->join('user_profiles', 'users.id', '=', 'user_profiles.user_id')
-            ->join('user_retentions', 'users.id', '=', 'user_retentions.user_id')
-            ->whereBetween('users.created_at', $dates);
-
-        //次日流失的逻辑应该基于留存记录
-        $qb_second_day = $qb_new_users->whereNull('user_retentions.day2_at');
-
-        $partitions = $qb_second_day->groupBy('user_profiles.source')->selectRaw('count(*) as num, source');
+        // 前天创建的用户，在昨天没有登录
+        $userIDs    = DB::table('user_retentions')->select('user_id')->whereNull('day2_at')->whereBetween('created_at', $dates)->get()->pluck('user_id')->toArray();
+        $partitions = DB::table('user_profiles')->selectRaw('count(1) as num, source')->whereIn('user_id', $userIDs)->groupBy('source');
         foreach ($partitions->get() as $part) {
             $dimension = Dimension::firstOrNew([
                 'group' => '次日流失用户分布',
@@ -201,9 +195,9 @@ class ArchiveRetention extends Command
             $dimension->save();
             echo '次日流失用户分布 - :' . $part->source . '  ' . $part->num . "\n";
         }
-
-        $avgGold   = $qb_second_day->avg('gold') ?? 0;
-        $dimension = Dimension::firstOrNew([
+        $qb_second_day = DB::table('users')->whereIn('user_id', $userIDs);
+        $avgGold       = $qb_second_day->avg('gold') ?? 0;
+        $dimension     = Dimension::firstOrNew([
             'group' => '次日流失用户',
             'name'  => '平均智慧点',
             'date'  => $date,
@@ -247,22 +241,30 @@ class ArchiveRetention extends Command
         $day2  = (clone $day)->subDay(2)->toDateString();
         $dates = [$day2, $day1];
 
-        // 前天创建的用户，在昨天没有登录
-        $userIDs    = DB::table('user_retentions')->select('user_id')->whereNull('day2_at')->whereBetween('created_at', $dates)->get()->pluck('user_id')->toArray();
-        $partitions = DB::table('user_profiles')->selectRaw('count(1) as num, source')->whereIn('user_id', $userIDs)->groupBy('source');
+        $qb_new_users = DB::table('users')
+            ->leftJoin('user_profiles', 'users.id', '=', 'user_profiles.user_id')
+            ->leftJoin('user_retentions', 'users.id', '=', 'user_retentions.user_id')
+            ->whereBetween('users.created_at', $dates);
+
+        //次日留存的逻辑应该基于留存记录
+        $qb_second_day = $qb_new_users
+            ->whereNotNull('user_retentions.day2_at');
+
+        $partitions = $qb_second_day->groupBy('user_profiles.source')
+            ->selectRaw('count(*) as num, source');
         foreach ($partitions->get() as $part) {
             $dimension = Dimension::firstOrNew([
-                'group' => '次日流失用户分布',
+                'group' => '次日留存用户分布',
                 'name'  => $part->source,
                 'date'  => $date,
             ]);
             $dimension->value = $part->num;
             $dimension->save();
-            echo '次日流失用户分布 - :' . $part->source . '  ' . $part->num . "\n";
+            echo '次日留存用户分布 - :' . $part->source . '  ' . $part->num . "\n";
         }
-        $qb_second_day = DB::table('users')->whereIn('id', $userIDs);
-        $avgGold       = $qb_second_day->avg('gold') ?? 0;
-        $dimension     = Dimension::firstOrNew([
+
+        $avgGold   = $qb_second_day->avg('gold') ?? 0;
+        $dimension = Dimension::firstOrNew([
             'group' => '次日留存用户',
             'name'  => '平均智慧点',
             'date'  => $date,
