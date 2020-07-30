@@ -183,8 +183,8 @@ class ArchiveRetention extends Command
         $dates = [$day2, $day1];
 
         // 前天创建的用户，在昨天没有登录
-        $userIDs    = DB::table('user_retentions')->select('user_id')->whereNull('day2_at')->whereBetween('created_at', $dates)->get()->pluck('user_id')->toArray();
-        $partitions = DB::table('user_profiles')->selectRaw('count(1) as num, source')->whereIn('user_id', $userIDs)->groupBy('source');
+        $userIDs    = DB::table('user_retentions')->select('user_id')->whereNotNull('day2_at')->whereBetween('created_at', $dates)->get()->pluck('user_id')->toArray();
+        $partitions = DB::table('user_profiles')->selectRaw('count(1) as num, source')->whereNotIn('user_id', $userIDs)->groupBy('source');
         foreach ($partitions->get() as $part) {
             $dimension = Dimension::firstOrNew([
                 'group' => '次日流失用户分布',
