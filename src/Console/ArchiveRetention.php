@@ -80,8 +80,8 @@ class ArchiveRetention extends Command
         $next_day_key = 'day2_at_' . $date->toDateString();
         if (!cache()->store('database')->get($next_day_key)) {
             $next_day_key_registed_at = $date->subDay(1);
-            $newRegistedNum           = User::whereDate('created_at', $next_day_key_registed_at)->count();
-            $userRetentionNum         = UserRetention::whereDate('day2_at', $next_day_key_registed_at)->count();
+            $newRegistedNum           = User::whereBetween('created_at', [$next_day_key_registed_at, $next_day_key_registed_at->addDay()])->count();
+            $userRetentionNum         = UserRetention::whereBetween('day2_at', [$next_day_key_registed_at, $next_day_key_registed_at->addDay()])->count();
             if (0 != $userRetentionNum) {
                 $next_day_result = sprintf('%.2f', ($userRetentionNum / $newRegistedNum) * 100);
                 cache()->store('database')->forever($next_day_key, $next_day_result);
@@ -96,8 +96,8 @@ class ArchiveRetention extends Command
         $third_day_key = 'day3_at_' . $date->toDateString();
         if (!cache()->store('database')->get($third_day_key)) {
             $third_day_registed_at = $date->subDay(3);
-            $newRegistedNum        = User::whereDate('created_at', $third_day_registed_at)->count();
-            $userRetentionNum      = UserRetention::whereDate('day3_at', $third_day_registed_at)->count();
+            $newRegistedNum        = User::whereBetween('created_at', [$third_day_registed_at, $third_day_registed_at->addDay()])->count();
+            $userRetentionNum      = UserRetention::whereBetween('day3_at', [$third_day_registed_at, $third_day_registed_at->addDay()])->count();
             if (0 != $userRetentionNum) {
                 $third_day_result = sprintf('%.2f', ($userRetentionNum / $newRegistedNum) * 100);
                 cache()->store('database')->forever($third_day_key, $third_day_result);
@@ -112,8 +112,8 @@ class ArchiveRetention extends Command
         $fifth_day_key = 'day5_at_' . $date->toDateString();
         if (!cache()->store('database')->get($fifth_day_key)) {
             $fifth_day_registed_at = $date->subDay(5);
-            $newRegistedNum        = User::whereDate('created_at', $fifth_day_registed_at)->count();
-            $userRetentionNum      = UserRetention::whereDate('day5_at', $fifth_day_registed_at)->count();
+            $newRegistedNum        = User::whereBetween('created_at', [$fifth_day_registed_at, $fifth_day_registed_at->addDay()])->count();
+            $userRetentionNum      = UserRetention::whereBetween('day5_at', [$fifth_day_registed_at, $fifth_day_registed_at->addDay()])->count();
             if (0 != $userRetentionNum) {
                 $fifth_day_result = sprintf('%.2f', ($userRetentionNum / $newRegistedNum) * 100);
                 cache()->store('database')->forever($fifth_day_key, $fifth_day_result);
@@ -128,8 +128,8 @@ class ArchiveRetention extends Command
         $sixth_day_key = 'day7_at_' . $date->toDateString();
         if (!cache()->store('database')->get($sixth_day_key)) {
             $sixth_day_registed_at = $date->subDay(7);
-            $newRegistedNum        = User::whereDate('created_at', $sixth_day_registed_at)->count();
-            $userRetentionNum      = UserRetention::whereDate('day7_at', $sixth_day_registed_at)->count();
+            $newRegistedNum        = User::whereBetween('created_at', [$sixth_day_registed_at, $sixth_day_registed_at->addDay()])->count();
+            $userRetentionNum      = UserRetention::whereBetween('day7_at', [$sixth_day_registed_at, $sixth_day_registed_at->addDay()])->count();
             if (0 != $userRetentionNum) {
                 $sixth_day_result = sprintf('%.2f', ($userRetentionNum / $newRegistedNum) * 100);
                 cache()->store('database')->forever($sixth_day_key, $sixth_day_result);
@@ -144,8 +144,8 @@ class ArchiveRetention extends Command
         $sixth_day_key = 'day15_at_' . $date->toDateString();
         if (!cache()->store('database')->get($sixth_day_key)) {
             $sixth_day_registed_at = $date->subDay(15);
-            $newRegistedNum        = User::whereDate('created_at', $sixth_day_registed_at)->count();
-            $userRetentionNum      = UserRetention::whereDate('day15_at', $sixth_day_registed_at)->count();
+            $newRegistedNum        = User::whereBetween('created_at', [$sixth_day_registed_at, $sixth_day_registed_at->addDay()])->count();
+            $userRetentionNum      = UserRetention::whereBetween('day15_at', [$sixth_day_registed_at, $sixth_day_registed_at->addDay()])->count();
             if (0 != $userRetentionNum) {
                 $fifteen_day_result = sprintf('%.2f', ($userRetentionNum / $newRegistedNum) * 100);
                 cache()->store('database')->forever($sixth_day_key, $fifteen_day_result);
@@ -159,8 +159,8 @@ class ArchiveRetention extends Command
         $month_key = 'day30_at_' . $date->toDateString();
         if (!cache()->store('database')->get($month_key)) {
             $month_registed_at = $date->subDay(30);
-            $newRegistedNum    = User::whereDate('created_at', $month_registed_at)->count();
-            $userRetentionNum  = UserRetention::whereDate('day30_at', $month_registed_at)->count();
+            $newRegistedNum    = User::whereBetween('created_at', [$month_registed_at, $month_registed_at->addDay()])->count();
+            $userRetentionNum  = UserRetention::whereBetween('day30_at', [$month_registed_at, $month_registed_at->addDay()])->count();
             if (0 != $userRetentionNum) {
                 $month_result = sprintf('%.2f', ($userRetentionNum / $newRegistedNum) * 100);
                 cache()->store('database')->forever($month_key, $month_result);
