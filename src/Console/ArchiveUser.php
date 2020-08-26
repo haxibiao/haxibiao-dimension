@@ -14,7 +14,7 @@ class ArchiveUser extends Command
      *
      * @var string
      */
-    protected $signature = 'archive:user {--date=} {--hour=} {--newuser : 新用户首日数据}';
+    protected $signature = 'archive:user {--date=} {--hour=} {--newuser : 新用户首日数据} {--categoryuser : 新老用户分类数据}';
 
     /**
      * 接受短信手机号
@@ -52,6 +52,11 @@ class ArchiveUser extends Command
         if ($this->option('newuser')) {
             $this->info("维度归档统计: 新用户首日行为数据 ..." . $date);
             return $this->firstDayUser($date);
+        }
+
+        if ($this->option('categoryuser')) {
+            $this->info("维度归档统计: 新老用户数据 ..." . $date);
+            return $this->userCategoriesByDay($date);
         }
 
         //默认归档当前小时新增
@@ -169,6 +174,67 @@ class ArchiveUser extends Command
         echo '新用户首日 - 零账单变动人数:' . $zero_gold_count . ' 日期:' . $date . "\n";
 
     }
+
+    /**
+     * 每天根据提现次数分类用户
+     */
+    public function userCategoriesByDay($date){
+
+        // 没有提现过的用户
+        $pureNewUserQuery = DB::select('SELECT count(1) as pureNewUserCount FROM user_profiles where transaction_sum_amount =  0 and created_at >= ?;',[$date]);
+        $pureNewUserCount = current($pureNewUserQuery)->pureNewUserCount;
+
+        $dimension = Dimension::firstOrNew([
+            'group' => '新老用户分类活跃数',
+            'name'  => '纯新用户',
+            'date'  => $date,
+        ]);
+        $dimension->value = $pureNewUserCount;
+        $dimension->save();
+        echo '新老用户分类活跃数 - 纯新用户:' . $pureNewUserCount . ' 日期:' . $date . "\n";
+
+
+        // 提现一次用户
+        $NewUserQuery = DB::select('SELECT count(1) as newUserCount FROM ( SELECT count(1) as num, wallet_id FROM withdraws WHERE created_at >= ? GROUP BY wallet_id HAVING num = 1) AS b;',[$date]);
+        $newUserCount = current($NewUserQuery)->newUserCount;
+
+        $dimension = Dimension::firstOrNew([
+            'group' => '新老用户分类活跃数',
+            'name'  => '新用户',
+            'date'  => $date,
+        ]);
+        $dimension->value = $newUserCount;
+        $dimension->save();
+        echo '新老用户分类活跃数 - 新用户:' . $newUserCount . ' 日期:' . $date . "\n";
+
+        // 提现2-7次用户
+        $OldUserQuery = DB::select('SELECT count(1) as oldUserCount FROM ( SELECT count(1) as num, wallet_id FROM withdraws WHERE created_at >= ? GROUP BY wallet_id HAVING num BETWEEN 2 and 8) AS b;',[$date]);
+        $oldUserCount = current($OldUserQuery)->oldUserCount;
+
+        $dimension = Dimension::firstOrNew([
+            'group' => '新老用户分类活跃数',
+            'name'  => '老用户',
+            'date'  => $date,
+        ]);
+        $dimension->value = $newUserCount;
+        $dimension->save();
+        echo '新老用户分类活跃数 - 老用户:' . $oldUserCount . ' 日期:' . $date . "\n";
+
+        // 提现7次以上
+        $pureOldUserQuery = DB::select('SELECT count(1) as pureOldUserCount FROM ( SELECT count(1) as num, wallet_id FROM withdraws WHERE created_at >= ? GROUP BY wallet_id HAVING num > 7) AS b;',[$date]);
+        $pureOldUserCount = current($pureOldUserQuery)->pureOldUserCount;
+
+        $dimension = Dimension::firstOrNew([
+            'group' => '新老用户分类活跃数',
+            'name'  => '纯老用户',
+            'date'  => $date,
+        ]);
+        $dimension->value = $newUserCount;
+        $dimension->save();
+        echo '新老用户分类活跃数 - 纯老用户:' . $pureOldUserCount . ' 日期:' . $date . "\n";
+
+    }
+
 
     // 每三小时发一次新增和提现统计短信 - 暂时停用
     public function smsAlert()

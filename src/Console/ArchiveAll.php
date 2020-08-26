@@ -42,6 +42,9 @@ class ArchiveAll extends Command
         //每日归档新用户数据
         $this->call("archive:user", ['--date' => $date, '--newuser' => true]);
 
+        //每日归档新老用户数据
+        $this->call("archive:user", ['--date' => $date, '--categoryuser' => true]);
+
         //每日归档留存率
         $this->call("archive:retention", ['--date' => $date]);
 
