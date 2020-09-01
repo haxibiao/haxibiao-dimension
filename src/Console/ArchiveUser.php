@@ -183,24 +183,9 @@ class ArchiveUser extends Command
 
         // 归档昨天的数据
         $date = Carbon::parse($date)->subDay(1)->toDateString();
-        $yesterday = Carbon::parse($date)->subDay(2)->toDateString();
-
-        // 获取前天统计数量
-        $yesterdayPureNewUserQuery = DB::select('SELECT count(1) as yesterdayPureNewUserCount FROM user_profiles where transaction_sum_amount =  0 and created_at >= ?;',[$yesterday]);
-        $yesterdayPureNewUserCount = current($yesterdayPureNewUserQuery)->yesterdayPureNewUserCount;
-
-        $yesterdayNewUserQuery = DB::select('SELECT count(1) as yesterdayNewUserCount FROM ( SELECT count(1) as num, wallet_id FROM withdraws WHERE created_at >= ? GROUP BY wallet_id HAVING num = 1) AS b;',[$yesterday]);
-        $yesterdayNewUserCount = current($yesterdayNewUserQuery)->yesterdayNewUserCount;
-
-        $yesterdayOldUserQuery = DB::select('SELECT count(1) as yesterdayOldUserCount FROM ( SELECT count(1) as num, wallet_id FROM withdraws WHERE created_at >= ? GROUP BY wallet_id HAVING num BETWEEN 2 and 8) AS b;',[$yesterday]);
-        $yesterdayOldUserCount = current($yesterdayOldUserQuery)->yesterdayOldUserCount;
-
-        $yesterdayPureOldUserQuery = DB::select('SELECT count(1) as yesterdayPureOldUserCount FROM ( SELECT count(1) as num, wallet_id FROM withdraws WHERE created_at >= ? GROUP BY wallet_id HAVING num > 7) AS b;',[$yesterday]);
-        $yesterdayPureOldUserCount = current($yesterdayPureOldUserQuery)->yesterdayPureOldUserCount;
-
 
         // 没有提现过的用户
-        $pureNewUserQuery = DB::select('SELECT count(1) as pureNewUserCount FROM user_profiles where transaction_sum_amount =  0 and created_at >= ?;',[$date]);
+        $pureNewUserQuery = DB::select('SELECT count(1) as pureNewUserCount FROM user_profiles where transaction_sum_amount =  0 and created_at >= "2018-12-12";');
         $pureNewUserCount = current($pureNewUserQuery)->pureNewUserCount;
 
         $dimension = Dimension::firstOrNew([
@@ -208,13 +193,13 @@ class ArchiveUser extends Command
             'name'  => '纯新用户',
             'date'  => $date,
         ]);
-        $dimension->value = $pureNewUserCount + $yesterdayPureNewUserCount;
+        $dimension->value = $pureNewUserCount;
         $dimension->save();
-        echo '新老用户分类活跃数 - 纯新用户:' . $pureNewUserCount + $yesterdayPureNewUserCount . ' 日期:' . $date . "\n";
+        echo '新老用户分类活跃数 - 纯新用户:' . $pureNewUserCount . ' 日期:' . $date . "\n";
 
 
         // 提现一次用户
-        $NewUserQuery = DB::select('SELECT count(1) as newUserCount FROM ( SELECT count(1) as num, wallet_id FROM withdraws WHERE created_at >= ? GROUP BY wallet_id HAVING num = 1) AS b;',[$date]);
+        $NewUserQuery = DB::select('SELECT count(1) as newUserCount FROM ( SELECT count(1) as num, wallet_id FROM withdraws WHERE created_at >= "2018-12-12" GROUP BY wallet_id HAVING num = 1) AS b;');
         $newUserCount = current($NewUserQuery)->newUserCount;
 
         $dimension = Dimension::firstOrNew([
@@ -222,12 +207,12 @@ class ArchiveUser extends Command
             'name'  => '新用户',
             'date'  => $date,
         ]);
-        $dimension->value = $newUserCount + $yesterdayNewUserCount;
+        $dimension->value = $newUserCount;
         $dimension->save();
-        echo '新老用户分类活跃数 - 新用户:' . $newUserCount + $yesterdayNewUserCount . ' 日期:' . $date . "\n";
+        echo '新老用户分类活跃数 - 新用户:' . $newUserCount . ' 日期:' . $date . "\n";
 
         // 提现2-7次用户
-        $OldUserQuery = DB::select('SELECT count(1) as oldUserCount FROM ( SELECT count(1) as num, wallet_id FROM withdraws WHERE created_at >= ? GROUP BY wallet_id HAVING num BETWEEN 2 and 8) AS b;',[$date]);
+        $OldUserQuery = DB::select('SELECT count(1) as oldUserCount FROM ( SELECT count(1) as num, wallet_id FROM withdraws WHERE created_at >= "2018-12-12" GROUP BY wallet_id HAVING num BETWEEN 2 and 8) AS b;');
         $oldUserCount = current($OldUserQuery)->oldUserCount;
 
         $dimension = Dimension::firstOrNew([
@@ -235,12 +220,12 @@ class ArchiveUser extends Command
             'name'  => '老用户',
             'date'  => $date,
         ]);
-        $dimension->value = $oldUserCount + $yesterdayOldUserCount;
+        $dimension->value = $oldUserCount;
         $dimension->save();
-        echo '新老用户分类活跃数 - 老用户:' . $oldUserCount + $yesterdayOldUserCount . ' 日期:' . $date . "\n";
+        echo '新老用户分类活跃数 - 老用户:' . $oldUserCount . ' 日期:' . $date . "\n";
 
         // 提现7次以上
-        $pureOldUserQuery = DB::select('SELECT count(1) as pureOldUserCount FROM ( SELECT count(1) as num, wallet_id FROM withdraws WHERE created_at >= ? GROUP BY wallet_id HAVING num > 7) AS b;',[$date]);
+        $pureOldUserQuery = DB::select('SELECT count(1) as pureOldUserCount FROM ( SELECT count(1) as num, wallet_id FROM withdraws WHERE created_at >= "2018-12-12" GROUP BY wallet_id HAVING num > 7) AS b;');
         $pureOldUserCount = current($pureOldUserQuery)->pureOldUserCount;
 
         $dimension = Dimension::firstOrNew([
@@ -248,9 +233,9 @@ class ArchiveUser extends Command
             'name'  => '纯老用户',
             'date'  => $date,
         ]);
-        $dimension->value = $pureOldUserCount + $yesterdayPureOldUserCount;
+        $dimension->value = $pureOldUserCount;
         $dimension->save();
-        echo '新老用户分类活跃数 - 纯老用户:' . $pureOldUserCount + $yesterdayPureOldUserCount . ' 日期:' . $date . "\n";
+        echo '新老用户分类活跃数 - 纯老用户:' . $pureOldUserCount . ' 日期:' . $date . "\n";
 
     }
 
