@@ -2,6 +2,7 @@
 
 namespace Haxibiao\Dimension\Console;
 
+use App\Invitation;
 use Carbon\Carbon;
 use Haxibiao\Base\User;
 use Haxibiao\Base\UserRetention;
@@ -45,6 +46,7 @@ class ArchiveRetention extends Command
         //注意：留存都是看前一天的
         $date = $this->option('date') ?? today()->toDateString();
         $type = $this->option('type');
+
         if ($type == 'retention') {
             return $this->calculateRetention($date);
         }
@@ -63,6 +65,9 @@ class ArchiveRetention extends Command
 
         $this->info("维度归档统计: 次日留存用户 ..." . $date);
         $this->secondDayKeepUser($date);
+
+        $this->info("归档邀请用户次日留存 ..." . $date);
+        $this->secondDayKeepInvitedUser($date);
     }
 
     /**
@@ -327,6 +332,35 @@ class ArchiveRetention extends Command
 
         //计算15日后的留存逻辑
         $qb_second_day = $qb_new_users->whereNull('user_retentions');
+    }
+
+    public function secondDayKeepInvitedUser(String $date)
+    {
+        //注意：留存都是看前一天的
+        $day   = Carbon::parse($date);
+        $day1  = (clone $day)->subDay(1)->toDateString();
+        $day2  = (clone $day)->subDay(2)->toDateString();
+        $dates = [$day2, $day1];
+
+        if (class_exists('\App\Invitation')) {
+            $invitedUserNum = Invitation::select('id')->whereBetween('created_at', $dates)->where('invited_user_id', '>', 0)->count();
+
+            $userRetentionNum = UserRetention::whereIn('user_id', function ($query) use ($dates) {
+                $query->select('invited_user_id')
+                    ->from('invitations')
+                    ->whereBetween('created_at', $dates)
+                    ->where('invited_user_id', '>', 0);
+            })->whereBetween('day2_at', $dates)->count();
+
+            if (0 != $userRetentionNum) {
+                $result   = sprintf('%.2f', ($userRetentionNum / $invitedUserNum) * 100);
+                $cachekey = sprintf(UserRetention::INVITED_USER_CACHE_FORMAT, $day1);
+                // 只保留最近90天的数据
+                cache()->store('database')->put($cachekey, $result, today()->addDay(90));
+                echo $result;
+            }
+        }
+
     }
 
 }
