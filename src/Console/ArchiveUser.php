@@ -15,7 +15,7 @@ class ArchiveUser extends Command
      *
      * @var string
      */
-    protected $signature = 'archive:user {--date=} {--hour=} {--newuser : 新用户首日数据} {--categoryuser : 新老用户分类数据}';
+    protected $signature = 'archive:user {--date=} {--hour=} {--newuser : 新用户首日数据} {--categoryuser : 新老用户分类数据} {--newUserActivation : 新用户激活漏斗}';
 
     /**
      * 接受短信手机号
@@ -58,6 +58,11 @@ class ArchiveUser extends Command
         if ($this->option('categoryuser')) {
             $this->info("维度归档统计: 新老用户数据 ..." . $date);
             return $this->userCategoriesByDay($date);
+        }
+
+        if ($this->option('newUserActivation')) {
+            $this->info("维度归档统计: 新用户激活漏斗 ..." . $date);
+            return $this->newUserActivation($date);
         }
 
         //默认归档当前小时新增
@@ -237,6 +242,99 @@ class ArchiveUser extends Command
         $dimension->save();
         echo '新老用户分类活跃数 - 纯老用户:' . $pureOldUserCount . ' 日期:' . $date . "\n";
 
+    }
+
+    /**
+     * 新用户激活漏斗数据归档
+     */
+    public function newUserActivation($date){
+        // 归档昨天的数据
+        $day   = today()->toDateTimeString();
+        $dates = [today()->subDay()->toDateTimeString(), $day];
+
+        $qb_first_day = DB::table('user_profiles')
+            ->whereBetween('created_at', $dates);
+
+        // 首次登陆
+        $fistLoginCount = DB::table('users')
+            ->whereBetween('created_at', $dates)
+            ->count();
+
+        $dimension = Dimension::firstOrNew([
+            'group' => '新用户激活漏斗',
+            'name'  => '首次登陆',
+            'date'  => $date,
+        ]);
+        $dimension->value = $fistLoginCount;
+        $dimension->save();
+        echo '新用户激活漏斗 - 首次登陆:' . $fistLoginCount . ' 日期:' . $date . "\n";
+
+        // 签到双倍奖励
+        $signInCount = DB::table('users')
+            ->where('gold', 300)
+            ->whereBetween('created_at', $dates)
+            ->count();
+
+        $dimension = Dimension::firstOrNew([
+            'group' => '新用户激活漏斗',
+            'name'  => '签到双倍奖励',
+            'date'  => $date,
+        ]);
+        $dimension->value = $signInCount;
+        $dimension->save();
+        echo '新用户激活漏斗 - 签到双倍奖励:' . $signInCount . ' 日期:' . $date . "\n";
+
+        // 完成提现
+        $newUserId = DB::table('users')
+            ->whereBetween('created_at', $dates)
+            ->pluck('id');
+
+        $withdraws = DB::table('withdraws')
+            ->whereIn('user_id', $newUserId)
+            ->whereBetween('created_at', $dates)
+            ->count();
+
+        $dimension = Dimension::firstOrNew([
+            'group' => '新用户激活漏斗',
+            'name'  => '完成提现',
+            'date'  => $date,
+        ]);
+        $dimension->value = $withdraws;
+        $dimension->save();
+        echo '新用户激活漏斗 - 完成提现:' . $withdraws . ' 日期:' . $date . "\n";
+
+        // 开始答题
+        $answers_begin = (clone $qb_first_day)->where('answers_count', '=', 0)->count();
+        $dimension = Dimension::firstOrNew([
+            'group' => '新用户激活漏斗',
+            'name'  => '开始答题',
+            'date'  => $date,
+        ]);
+        $dimension->value = $answers_begin;
+        $dimension->save();
+        echo '新用户激活漏斗 - 开始答题:' . $answers_begin . ' 日期:' . $date . "\n";
+
+        // 完成 5 题
+        $answers_5 = (clone $qb_first_day)->where('answers_count', '>=', 5)->count();
+        $dimension = Dimension::firstOrNew([
+            'group' => '新用户激活漏斗',
+            'name'  => '完成5题',
+            'date'  => $date,
+        ]);
+        $dimension->value = $answers_5;
+        $dimension->save();
+        echo '新用户激活漏斗 - 完成 5 题:' . $answers_5 . ' 日期:' . $date . "\n";
+
+        // 完成 10 题
+        $answers_10 = (clone $qb_first_day)->where('answers_count', '>=', 10)->count();
+        $dimension = Dimension::firstOrNew([
+            'group' => '新用户激活漏斗',
+            'name'  => '完成10题',
+            'date'  => $date,
+        ]);
+        $dimension->value = $answers_10;
+        $dimension->save();
+        echo '新用户激活漏斗 - 完成 10 题:' . $answers_10 . ' 日期:' . $date . "\n";
     }
 
 
