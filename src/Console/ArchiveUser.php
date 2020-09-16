@@ -311,6 +311,35 @@ class ArchiveUser extends Command
 
         echo '新用户激活漏斗 - 签到双倍奖励:' . $signInCount . ' 日期:' . $date . "\n";
 
+        // 领取新人红包
+        $redPacketCount = DB::table('users')
+            ->where('gold','>=', 320)
+            ->whereBetween('created_at', $dates)
+            ->count();
+
+        $dimension = Dimension::firstOrNew([
+            'group' => '新用户激活漏斗',
+            'name'  => '领取新人红包',
+            'date'  => $date,
+        ]);
+        $dimension->value = $redPacketCount;
+        $dimension->save();
+
+        // 计算 环节转化率、整体转化率
+        $activation = UserActivation::firstOrNew([
+            'date' => $date,
+            'action' => '领取新人红包',
+            'remark' => '新用户 - 领取新人红包',
+        ]);
+
+        $activation->all_conversion_rate = round($redPacketCount / $fistLoginCount, 2) * 100 . '%';
+        $activation->link_conversion_rate = round($redPacketCount / $signInCount, 2) * 100 . '%';
+        $activation->action_count = $redPacketCount;
+
+        $activation->save();
+
+        echo '新用户激活漏斗 - 领取新人红包:' . $redPacketCount . ' 日期:' . $date . "\n";
+
         // 开始答题
         $answers_begin = (clone $qb_first_day)->where('answers_count', '>=', 1)->count();
         $dimension = Dimension::firstOrNew([
@@ -408,6 +437,41 @@ class ArchiveUser extends Command
         $activation->save();
         echo '新用户激活漏斗 - 完成 10 题:' . $answers_10 . ' 日期:' . $date . "\n";
 
+        // 绑定提现账号
+        $newUserId = DB::table('users')
+            ->whereBetween('created_at', $dates)
+            ->pluck('id');
+
+        $bindOauthCount = DB::table('o_auths')
+            ->whereIn('user_id', $newUserId)
+            ->whereBetween('created_at', $dates)
+            ->where('oauth_type', '!=', 'damei')
+            ->where('oauth_type', '!=', 'dongdezhuan')
+            ->count();
+
+        $dimension = Dimension::firstOrNew([
+            'group' => '新用户激活漏斗',
+            'name'  => '绑定提现账号',
+            'date'  => $date,
+        ]);
+        $dimension->value = $bindOauthCount;
+        $dimension->save();
+
+        // 计算 环节转化率、整体转化率
+        $activation = UserActivation::firstOrNew([
+            'date' => $date,
+            'action' => '绑定提现账号',
+            'remark' => '支付宝、微信',
+        ]);
+
+        $activation->all_conversion_rate = round($bindOauthCount / $fistLoginCount, 2) * 100 . '%';
+        $activation->link_conversion_rate = round($bindOauthCount / $answers_10, 2) * 100 . '%';
+        $activation->action_count = $bindOauthCount;
+
+        $activation->save();
+
+        echo '新用户激活漏斗 - 绑定提现账号:' . $bindOauthCount . ' 日期:' . $date . "\n";
+
         // 完成提现
         $newUserId = DB::table('users')
             ->whereBetween('created_at', $dates)
@@ -434,12 +498,22 @@ class ArchiveUser extends Command
         ]);
 
         $activation->all_conversion_rate = round($withdraws / $fistLoginCount, 2) * 100 . '%';
-        $activation->link_conversion_rate = round($withdraws / $answers_10, 2) * 100 . '%';
+        $activation->link_conversion_rate = round($withdraws / $bindOauthCount, 2) * 100 . '%';
         $activation->action_count = $withdraws;
 
         $activation->save();
 
         echo '新用户激活漏斗 - 完成提现:' . $withdraws . ' 日期:' . $date . "\n";
+    }
+
+    /**
+     * 更新新用户激活数据
+     *
+     * note: 例如 16 日注册用户, 如果在 17 日他也提现, 那么他将归档至 16 日完成提现的数据中
+     * @param $date
+     */
+    public function updateNewUserActivation($date) {
+
     }
 
 
