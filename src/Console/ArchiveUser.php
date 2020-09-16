@@ -271,6 +271,7 @@ class ArchiveUser extends Command
 
         // 计算 环节转化率、整体转化率
         $activation = UserActivation::firstOrNew([
+            'date' => $date,
             'action' => '首次登陆',
             'remark' => '当日新用户',
             'all_conversion_rate' => '100%',
@@ -297,6 +298,7 @@ class ArchiveUser extends Command
 
         // 计算 环节转化率、整体转化率
         $activation = UserActivation::firstOrNew([
+            'date' => $date,
             'action' => '签到双倍奖励',
             'remark' => '新用户 - 0账单变动',
         ]);
@@ -321,6 +323,7 @@ class ArchiveUser extends Command
 
         // 计算 环节转化率、整体转化率
         $activation = UserActivation::firstOrNew([
+            'date' => $date,
             'action' => '开始答题',
             'remark' => '新用户-答题0题以上',
         ]);
@@ -344,6 +347,7 @@ class ArchiveUser extends Command
 
         // 计算 环节转化率、整体转化率
         $activation = UserActivation::firstOrNew([
+            'date' => $date,
             'action' => '完成5题',
             'remark' => '新用户-答题5题以上',
         ]);
@@ -367,6 +371,7 @@ class ArchiveUser extends Command
 
         // 计算 环节转化率、整体转化率
         $activation = UserActivation::firstOrNew([
+            'date' => $date,
             'action' => '完成6题',
             'remark' => '新用户-答题6题以上',
         ]);
@@ -391,6 +396,7 @@ class ArchiveUser extends Command
 
         // 计算 环节转化率、整体转化率
         $activation = UserActivation::firstOrNew([
+            'date' => $date,
             'action' => '完成10题',
             'remark' => '新用户-答题10题以上',
         ]);
@@ -422,8 +428,9 @@ class ArchiveUser extends Command
 
         // 计算 环节转化率、整体转化率
         $activation = UserActivation::firstOrNew([
+            'date' => $date,
             'action' => '完成提现',
-            'remark' => '当日新用户',
+            'remark' => '提现0.3元',
         ]);
 
         $activation->all_conversion_rate = round($withdraws / $fistLoginCount, 2) * 100 . '%';
