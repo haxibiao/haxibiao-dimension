@@ -282,38 +282,9 @@ class ArchiveUser extends Command
 
         echo '新用户激活漏斗 - 首次登陆:' . $fistLoginCount . ' 日期:' . $date . "\n";
 
-        // 签到双倍奖励
-        $signInCount = DB::table('users')
-            ->where('gold','!=', 300)
-            ->whereBetween('created_at', $dates)
-            ->count();
-
-        $dimension = Dimension::firstOrNew([
-            'group' => '新用户激活漏斗',
-            'name'  => '签到双倍奖励',
-            'date'  => $date,
-        ]);
-        $dimension->value = $signInCount;
-        $dimension->save();
-
-        // 计算 环节转化率、整体转化率
-        $activation = UserActivation::firstOrNew([
-            'date' => $date,
-            'action' => '签到双倍奖励',
-            'remark' => '新用户 - 0账单变动',
-        ]);
-
-        $activation->all_conversion_rate = round($signInCount / $fistLoginCount, 2) * 100 . '%';
-        $activation->link_conversion_rate = round($signInCount / $fistLoginCount, 2) * 100 . '%';
-        $activation->action_count = $signInCount;
-
-        $activation->save();
-
-        echo '新用户激活漏斗 - 签到双倍奖励:' . $signInCount . ' 日期:' . $date . "\n";
-
         // 领取新人红包
-        $redPacketCount = DB::table('users')
-            ->where('gold','>=', 320)
+        $redPacketCount = DB::table('gold')
+            ->where('remark', '新人注册奖励')
             ->whereBetween('created_at', $dates)
             ->count();
 
@@ -329,16 +300,45 @@ class ArchiveUser extends Command
         $activation = UserActivation::firstOrNew([
             'date' => $date,
             'action' => '领取新人红包',
-            'remark' => '新用户 - 领取新人红包',
+            'remark' => '新人注册奖励',
         ]);
 
         $activation->all_conversion_rate = round($redPacketCount / $fistLoginCount, 2) * 100 . '%';
-        $activation->link_conversion_rate = round($redPacketCount / $signInCount, 2) * 100 . '%';
+        $activation->link_conversion_rate = round($redPacketCount / $fistLoginCount, 2) * 100 . '%';
         $activation->action_count = $redPacketCount;
 
         $activation->save();
 
         echo '新用户激活漏斗 - 领取新人红包:' . $redPacketCount . ' 日期:' . $date . "\n";
+
+        // 领取签到奖励
+        $signInCount = DB::table('users')
+            ->where('gold','!=', 300)
+            ->whereBetween('created_at', $dates)
+            ->count();
+
+        $dimension = Dimension::firstOrNew([
+            'group' => '新用户激活漏斗',
+            'name'  => '领取签到奖励',
+            'date'  => $date,
+        ]);
+        $dimension->value = $signInCount;
+        $dimension->save();
+
+        // 计算 环节转化率、整体转化率
+        $activation = UserActivation::firstOrNew([
+            'date' => $date,
+            'action' => '领取签到奖励',
+            'remark' => 'gold!=300',
+        ]);
+
+        $activation->all_conversion_rate = round($signInCount / $fistLoginCount, 2) * 100 . '%';
+        $activation->link_conversion_rate = round($signInCount / $redPacketCount, 2) * 100 . '%';
+        $activation->action_count = $signInCount;
+
+        $activation->save();
+
+        echo '新用户激活漏斗 - 领取签到奖励:' . $signInCount . ' 日期:' . $date . "\n";
 
         // 开始答题
         $answers_begin = (clone $qb_first_day)->where('answers_count', '>=', 1)->count();
