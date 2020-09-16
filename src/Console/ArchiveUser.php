@@ -3,6 +3,7 @@
 namespace Haxibiao\Dimension\Console;
 
 use App\User;
+use App\UserActivation;
 use Carbon\Carbon;
 use Illuminate\Console\Command;
 use Haxibiao\Dimension\Dimension;
@@ -267,11 +268,22 @@ class ArchiveUser extends Command
         ]);
         $dimension->value = $fistLoginCount;
         $dimension->save();
+
+        // 计算 环节转化率、整体转化率
+        $activation = UserActivation::firstOrNew([
+            'action' => '首次登陆',
+            'remark' => '当日新用户',
+            'all_conversion_rate' => '100%',
+            'link_conversion_rate' => '100%',
+        ]);
+        $activation->action_count = $fistLoginCount;
+        $activation->save();
+
         echo '新用户激活漏斗 - 首次登陆:' . $fistLoginCount . ' 日期:' . $date . "\n";
 
         // 签到双倍奖励
         $signInCount = DB::table('users')
-            ->where('gold', 300)
+            ->where('gold','!=', 300)
             ->whereBetween('created_at', $dates)
             ->count();
 
@@ -282,7 +294,113 @@ class ArchiveUser extends Command
         ]);
         $dimension->value = $signInCount;
         $dimension->save();
+
+        // 计算 环节转化率、整体转化率
+        $activation = UserActivation::firstOrNew([
+            'action' => '签到双倍奖励',
+            'remark' => '新用户 - 0账单变动',
+        ]);
+
+        $activation->all_conversion_rate = round($signInCount / $fistLoginCount, 2) * 100 . '%';
+        $activation->link_conversion_rate = round($signInCount / $fistLoginCount, 2) * 100 . '%';
+        $activation->action_count = $signInCount;
+
+        $activation->save();
+
         echo '新用户激活漏斗 - 签到双倍奖励:' . $signInCount . ' 日期:' . $date . "\n";
+
+        // 开始答题
+        $answers_begin = (clone $qb_first_day)->where('answers_count', '>=', 1)->count();
+        $dimension = Dimension::firstOrNew([
+            'group' => '新用户激活漏斗',
+            'name'  => '开始答题',
+            'date'  => $date,
+        ]);
+        $dimension->value = $answers_begin;
+        $dimension->save();
+
+        // 计算 环节转化率、整体转化率
+        $activation = UserActivation::firstOrNew([
+            'action' => '开始答题',
+            'remark' => '新用户-答题0题以上',
+        ]);
+
+        $activation->all_conversion_rate = round($answers_begin / $fistLoginCount, 2) * 100 . '%';
+        $activation->link_conversion_rate = round($answers_begin / $signInCount, 2) * 100 . '%';
+        $activation->action_count = $answers_begin;
+
+        $activation->save();
+        echo '新用户激活漏斗 - 开始答题:' . $answers_begin . ' 日期:' . $date . "\n";
+
+        // 完成 5 题
+        $answers_5 = (clone $qb_first_day)->where('answers_count', '>=', 5)->count();
+        $dimension = Dimension::firstOrNew([
+            'group' => '新用户激活漏斗',
+            'name'  => '完成5题',
+            'date'  => $date,
+        ]);
+        $dimension->value = $answers_5;
+        $dimension->save();
+
+        // 计算 环节转化率、整体转化率
+        $activation = UserActivation::firstOrNew([
+            'action' => '完成5题',
+            'remark' => '新用户-答题5题以上',
+        ]);
+
+        $activation->all_conversion_rate = round($answers_5 / $fistLoginCount, 2) * 100 . '%';
+        $activation->link_conversion_rate = round($answers_5 / $answers_begin, 2) * 100 . '%';
+        $activation->action_count = $answers_5;
+
+        $activation->save();
+        echo '新用户激活漏斗 - 完成 5 题:' . $answers_5 . ' 日期:' . $date . "\n";
+
+        // 完成 6 题
+        $answers_6 = (clone $qb_first_day)->where('answers_count', '>=', 6)->count();
+        $dimension = Dimension::firstOrNew([
+            'group' => '新用户激活漏斗',
+            'name'  => '完成6题',
+            'date'  => $date,
+        ]);
+        $dimension->value = $answers_6;
+        $dimension->save();
+
+        // 计算 环节转化率、整体转化率
+        $activation = UserActivation::firstOrNew([
+            'action' => '完成6题',
+            'remark' => '新用户-答题6题以上',
+        ]);
+
+        $activation->all_conversion_rate = round($answers_6 / $fistLoginCount, 2) * 100 . '%';
+        $activation->link_conversion_rate = round($answers_6 / $answers_5, 2) * 100 . '%';
+        $activation->action_count = $answers_6;
+
+        $activation->save();
+        echo '新用户激活漏斗 - 完成 6 题:' . $answers_6 . ' 日期:' . $date . "\n";
+
+
+        // 完成 10 题
+        $answers_10 = (clone $qb_first_day)->where('answers_count', '>=', 10)->count();
+        $dimension = Dimension::firstOrNew([
+            'group' => '新用户激活漏斗',
+            'name'  => '完成10题',
+            'date'  => $date,
+        ]);
+        $dimension->value = $answers_10;
+        $dimension->save();
+
+        // 计算 环节转化率、整体转化率
+        $activation = UserActivation::firstOrNew([
+            'action' => '完成10题',
+            'remark' => '新用户-答题10题以上',
+        ]);
+
+        $activation->all_conversion_rate = round($answers_10 / $fistLoginCount, 2) * 100 . '%';
+        $activation->link_conversion_rate = round($answers_10 / $answers_6, 2) * 100 . '%';
+        $activation->action_count = $answers_10;
+
+        $activation->save();
+        echo '新用户激活漏斗 - 完成 10 题:' . $answers_10 . ' 日期:' . $date . "\n";
 
         // 完成提现
         $newUserId = DB::table('users')
@@ -301,40 +419,20 @@ class ArchiveUser extends Command
         ]);
         $dimension->value = $withdraws;
         $dimension->save();
+
+        // 计算 环节转化率、整体转化率
+        $activation = UserActivation::firstOrNew([
+            'action' => '完成提现',
+            'remark' => '当日新用户',
+        ]);
+
+        $activation->all_conversion_rate = round($withdraws / $fistLoginCount, 2) * 100 . '%';
+        $activation->link_conversion_rate = round($withdraws / $answers_10, 2) * 100 . '%';
+        $activation->action_count = $withdraws;
+
+        $activation->save();
+
         echo '新用户激活漏斗 - 完成提现:' . $withdraws . ' 日期:' . $date . "\n";
-
-        // 开始答题
-        $answers_begin = (clone $qb_first_day)->where('answers_count', '=', 0)->count();
-        $dimension = Dimension::firstOrNew([
-            'group' => '新用户激活漏斗',
-            'name'  => '开始答题',
-            'date'  => $date,
-        ]);
-        $dimension->value = $answers_begin;
-        $dimension->save();
-        echo '新用户激活漏斗 - 开始答题:' . $answers_begin . ' 日期:' . $date . "\n";
-
-        // 完成 5 题
-        $answers_5 = (clone $qb_first_day)->where('answers_count', '>=', 5)->count();
-        $dimension = Dimension::firstOrNew([
-            'group' => '新用户激活漏斗',
-            'name'  => '完成5题',
-            'date'  => $date,
-        ]);
-        $dimension->value = $answers_5;
-        $dimension->save();
-        echo '新用户激活漏斗 - 完成 5 题:' . $answers_5 . ' 日期:' . $date . "\n";
-
-        // 完成 10 题
-        $answers_10 = (clone $qb_first_day)->where('answers_count', '>=', 10)->count();
-        $dimension = Dimension::firstOrNew([
-            'group' => '新用户激活漏斗',
-            'name'  => '完成10题',
-            'date'  => $date,
-        ]);
-        $dimension->value = $answers_10;
-        $dimension->save();
-        echo '新用户激活漏斗 - 完成 10 题:' . $answers_10 . ' 日期:' . $date . "\n";
     }
 
 
