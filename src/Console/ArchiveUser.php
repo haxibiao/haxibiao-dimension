@@ -250,8 +250,9 @@ class ArchiveUser extends Command
      */
     public function newUserActivation($date){
         // 归档昨天的数据
-        $day   = today()->toDateTimeString();
-        $dates = [today()->subDay()->toDateTimeString(), $day];
+        $date_format = Carbon::make($date);
+        $day   = $date_format->toDateTimeString();
+        $dates = [$date_format->subDay()->toDateTimeString(), $day];
 
         $qb_first_day = DB::table('user_profiles')
             ->whereBetween('created_at', $dates);
@@ -473,10 +474,6 @@ class ArchiveUser extends Command
         echo '新用户激活漏斗 - 绑定提现账号:' . $bindOauthCount . ' 日期:' . $date . "\n";
 
         // 完成提现
-        $newUserId = DB::table('users')
-            ->whereBetween('created_at', $dates)
-            ->pluck('id');
-
         $withdraws = DB::table('withdraws')
             ->whereIn('user_id', $newUserId)
             ->whereBetween('created_at', $dates)
@@ -504,16 +501,135 @@ class ArchiveUser extends Command
         $activation->save();
 
         echo '新用户激活漏斗 - 完成提现:' . $withdraws . ' 日期:' . $date . "\n";
+
+        self::updateNewUserActivation();
     }
 
     /**
      * 更新新用户激活数据
      *
      * note: 例如 16 日注册用户, 如果在 17 日他也提现, 那么他将归档至 16 日完成提现的数据中
-     * @param $date
      */
-    public function updateNewUserActivation($date) {
+    public function updateNewUserActivation() {
+        // 获取更新日期的数据
+        $day   = today()->subDay(3)->toDateString();
 
+        // 统计时间区间 00:00:00
+        $dates = [today()->subDay(3)->toDateTimeString(), today()->toDateTimeString()];
+
+        // 新用户创建日期 14号的新用户
+        $newUserDates = [today()->subDay(3)->toDateTimeString(),  today()->subDay(2)->toDateTimeString()];
+
+        $qb_first_day = DB::table('user_profiles')
+            ->whereBetween('created_at', $newUserDates);
+
+        $signInCount = DB::table('users')
+            ->where('gold','!=', 300)
+            ->whereBetween('created_at', $dates)
+            ->count();
+
+        $check = DB::table('user_activation')->where('date', '$day')->exists();
+        if (!$check) {
+            return;
+        }
+        // 重新计算转化率
+
+        // 开始答题
+        $answers_begin = (clone $qb_first_day)->where('answers_count', '>=', 1)->count();
+
+        $beforeRecord = DB::table('user_activation')
+            ->where('date', $day)
+            ->where('action', '开始答题')
+            ->first();
+
+        $beforeRecord->link_conversion_rate = round($answers_begin / $signInCount, 2) * 100 . '%';
+        $beforeRecord->action_count = $answers_begin;
+
+        $beforeRecord->update();
+        echo '更新新用户激活漏斗 - 开始答题:' . $answers_begin . ' 日期:' . $day . "\n";
+
+        // 完成5题
+        $answers_5 = (clone $qb_first_day)->where('answers_count', '>=', 5)->count();
+
+        $beforeRecord = DB::table('user_activation')
+            ->where('date', $day)
+            ->where('action', '完成5题')
+            ->first();
+
+        $beforeRecord->link_conversion_rate = round($answers_5 / $answers_begin, 2) * 100 . '%';
+        $beforeRecord->action_count = $answers_5;
+
+        $beforeRecord->update();
+        echo '更新新用户激活漏斗 - 完成 5 题:' . $answers_5 . ' 日期:' . $day . "\n";
+
+        // 完成 6 题
+        $answers_6 = (clone $qb_first_day)->where('answers_count', '>=', 6)->count();
+        $beforeRecord = DB::table('user_activation')
+            ->where('date', $day)
+            ->where('action', '完成6题')
+            ->first();
+
+        $beforeRecord->link_conversion_rate = round($answers_6 / $answers_5, 2) * 100 . '%';
+        $beforeRecord->action_count = $answers_6;
+
+        $beforeRecord->update();
+        echo '更新新用户激活漏斗 - 完成 6 题:' . $answers_6 . ' 日期:' . $day . "\n";
+
+        // 完成 10 题
+        $answers_10 = (clone $qb_first_day)->where('answers_count', '>=', 10)->count();
+        $beforeRecord = DB::table('user_activation')
+            ->where('date', $day)
+            ->where('action', '完成10题')
+            ->first();
+
+        $beforeRecord->link_conversion_rate = round($answers_10 / $answers_6, 2) * 100 . '%';
+        $beforeRecord->action_count = $answers_10;
+
+        $beforeRecord->update();
+        echo '更新新用户激活漏斗 - 完成 10 题:' . $answers_10 . ' 日期:' . $day . "\n";
+
+        // 绑定提现账号
+        $day   = today()->subDay(3)->toDateString();
+        $newUserId = DB::table('users')
+            ->whereBetween('created_at', $newUserDates)
+            ->pluck('id');
+
+        $bindOauthCount = DB::table('o_auths')
+            ->whereIn('user_id', $newUserId)
+            ->whereBetween('created_at', $dates)
+            ->where('oauth_type', '!=', 'damei')
+            ->where('oauth_type', '!=', 'dongdezhuan')
+            ->count();
+
+        $beforeRecord = DB::table('user_activation')
+            ->where('date', $day)
+            ->where('action', '绑定提现账号')
+            ->first();
+
+        $beforeRecord->link_conversion_rate = round($bindOauthCount / $answers_10, 2) * 100 . '%';
+        $beforeRecord->action_count = $bindOauthCount;
+
+        $beforeRecord->update();
+
+        echo '更新新用户激活漏斗 - 绑定提现账号:' . $bindOauthCount . ' 日期:' . $day . "\n";
+
+        // 完成提现
+        $withdraws = DB::table('withdraws')
+            ->whereIn('user_id', $newUserId)
+            ->whereBetween('created_at', $dates)
+            ->count();
+
+        $beforeRecord = DB::table('user_activation')
+            ->where('date', $day)
+            ->where('action', '完成提现')
+            ->first();
+
+        $beforeRecord->link_conversion_rate = round($withdraws / $bindOauthCount, 2) * 100 . '%';
+        $beforeRecord->action_count = $withdraws;
+
+        $beforeRecord->save();
+
+        echo '更新新用户激活漏斗 - 完成提现:' . $withdraws . ' 日期:' . $day . "\n";
     }
 
 
