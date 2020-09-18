@@ -528,10 +528,10 @@ class ArchiveUser extends Command
 
         $signInCount = DB::table('users')
             ->where('gold','!=', 300)
-            ->whereBetween('created_at', $dates)
+            ->whereBetween('created_at', $newUserDates)
             ->count();
 
-        $check = DB::table('user_activation')->where('date', '$day')->exists();
+        $check = DB::table('user_activation')->where('date', $day)->exists();
         if (!$check) {
             return;
         }
@@ -540,55 +540,33 @@ class ArchiveUser extends Command
         // 开始答题
         $answers_begin = (clone $qb_first_day)->where('answers_count', '>=', 1)->count();
 
-        $beforeRecord = DB::table('user_activation')
-            ->where('date', $day)
-            ->where('action', '开始答题')
-            ->first();
+        $link_conversion_rate = round($answers_begin / $signInCount, 2) * 100 . '%';
 
-        $beforeRecord->link_conversion_rate = round($answers_begin / $signInCount, 2) * 100 . '%';
-        $beforeRecord->action_count = $answers_begin;
-
-        $beforeRecord->update();
+        DB::update('update user_activation set second_link_conversion_rate = ? , action_count = ? where `date` = ? and `action` = ?', [$link_conversion_rate, $answers_begin, $day, '开始答题']);
         echo '更新新用户激活漏斗 - 开始答题:' . $answers_begin . ' 日期:' . $day . "\n";
 
         // 完成5题
         $answers_5 = (clone $qb_first_day)->where('answers_count', '>=', 5)->count();
 
-        $beforeRecord = DB::table('user_activation')
-            ->where('date', $day)
-            ->where('action', '完成5题')
-            ->first();
+        $link_conversion_rate = round($answers_5 / $answers_begin, 2) * 100 . '%';
 
-        $beforeRecord->link_conversion_rate = round($answers_5 / $answers_begin, 2) * 100 . '%';
-        $beforeRecord->action_count = $answers_5;
-
-        $beforeRecord->update();
+        DB::update('update user_activation set second_link_conversion_rate = ? , action_count = ? where `date` = ? and `action` = ?', [$link_conversion_rate, $answers_5, $day, '完成5题']);
         echo '更新新用户激活漏斗 - 完成 5 题:' . $answers_5 . ' 日期:' . $day . "\n";
 
         // 完成 6 题
         $answers_6 = (clone $qb_first_day)->where('answers_count', '>=', 6)->count();
-        $beforeRecord = DB::table('user_activation')
-            ->where('date', $day)
-            ->where('action', '完成6题')
-            ->first();
 
-        $beforeRecord->link_conversion_rate = round($answers_6 / $answers_5, 2) * 100 . '%';
-        $beforeRecord->action_count = $answers_6;
+        $link_conversion_rate = round($answers_6 / $answers_5, 2) * 100 . '%';
 
-        $beforeRecord->update();
+        DB::update('update user_activation set second_link_conversion_rate = ? , action_count = ? where `date` = ? and `action` = ?', [$link_conversion_rate, $answers_6, $day, '完成6题']);
         echo '更新新用户激活漏斗 - 完成 6 题:' . $answers_6 . ' 日期:' . $day . "\n";
 
         // 完成 10 题
         $answers_10 = (clone $qb_first_day)->where('answers_count', '>=', 10)->count();
-        $beforeRecord = DB::table('user_activation')
-            ->where('date', $day)
-            ->where('action', '完成10题')
-            ->first();
 
-        $beforeRecord->link_conversion_rate = round($answers_10 / $answers_6, 2) * 100 . '%';
-        $beforeRecord->action_count = $answers_10;
+        $link_conversion_rate = round($answers_10 / $answers_6, 2) * 100 . '%';
 
-        $beforeRecord->update();
+        DB::update('update user_activation set second_link_conversion_rate = ? , action_count = ? where `date` = ? and `action` = ?', [$link_conversion_rate, $answers_10, $day, '完成10题']);
         echo '更新新用户激活漏斗 - 完成 10 题:' . $answers_10 . ' 日期:' . $day . "\n";
 
         // 绑定提现账号
@@ -604,15 +582,9 @@ class ArchiveUser extends Command
             ->where('oauth_type', '!=', 'dongdezhuan')
             ->count();
 
-        $beforeRecord = DB::table('user_activation')
-            ->where('date', $day)
-            ->where('action', '绑定提现账号')
-            ->first();
+        $link_conversion_rate = round($bindOauthCount / $answers_10, 2) * 100 . '%';
 
-        $beforeRecord->link_conversion_rate = round($bindOauthCount / $answers_10, 2) * 100 . '%';
-        $beforeRecord->action_count = $bindOauthCount;
-
-        $beforeRecord->update();
+        DB::update('update user_activation set second_link_conversion_rate = ? , action_count = ? where `date` = ? and `action` = ?', [$link_conversion_rate, $bindOauthCount, $day, '绑定提现账号']);
 
         echo '更新新用户激活漏斗 - 绑定提现账号:' . $bindOauthCount . ' 日期:' . $day . "\n";
 
@@ -622,15 +594,9 @@ class ArchiveUser extends Command
             ->whereBetween('created_at', $dates)
             ->count();
 
-        $beforeRecord = DB::table('user_activation')
-            ->where('date', $day)
-            ->where('action', '完成提现')
-            ->first();
+        $link_conversion_rate = round($withdraws / $bindOauthCount, 2) * 100 . '%';
 
-        $beforeRecord->link_conversion_rate = round($withdraws / $bindOauthCount, 2) * 100 . '%';
-        $beforeRecord->action_count = $withdraws;
-
-        $beforeRecord->save();
+        DB::update('update user_activation set second_link_conversion_rate = ? , action_count = ? where `date` = ? and `action` = ?', [$link_conversion_rate, $withdraws, $day, '完成提现']);
 
         echo '更新新用户激活漏斗 - 完成提现:' . $withdraws . ' 日期:' . $day . "\n";
     }
