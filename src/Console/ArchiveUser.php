@@ -16,7 +16,10 @@ class ArchiveUser extends Command
      *
      * @var string
      */
-    protected $signature = 'archive:user {--date=} {--hour=} {--newuser : 新用户首日数据} {--categoryuser : 新老用户分类数据} {--newUserActivation : 新用户激活漏斗}';
+    protected $signature = 'archive:user {--date=} {--hour=}
+    {--newuser : 新用户首日数据}
+    {--categoryuser : 新老用户分类数据}
+    {--newUserActivation : 新用户激活漏斗}';
 
     /**
      * 接受短信手机号

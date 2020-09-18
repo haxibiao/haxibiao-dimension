@@ -56,6 +56,9 @@ class ArchiveRetention extends Command
         if ($type == 'keep') {
             return $this->secondDayKeepUser($date);
         }
+        if ($type == 'contribution') {
+            return $this->secondDayContribution($date);
+        }
 
         $this->info("维度归档统计: 统计留存数据 ..." . $date);
         $this->calculateRetention($date);
@@ -68,6 +71,9 @@ class ArchiveRetention extends Command
 
         $this->info("归档邀请用户次日留存 ..." . $date);
         $this->secondDayKeepInvitedUser($date);
+
+        $this->info("归档次日贡献用户留存 ..." . $date);
+        $this->secondDayContribution($date);
     }
 
     /**
@@ -360,7 +366,43 @@ class ArchiveRetention extends Command
                 echo $result;
             }
         }
+    }
 
+    /**
+     * 归档次日贡献留存
+     * note: 例如 $date 传入 2020-09-18 , 那么归档的新用户数据为 2020-09-16 ~ 2020-09-17 的数据
+     * @param $date
+     */
+    public function secondDayContribution($date)
+    {
+        // 获取查询的时间区间
+        $date_format = Carbon::make($date);
+
+        $dates = [(clone $date_format)->subDay(3)->toDateTimeString(), (clone $date_format)->subDay(2)->toDateTimeString()];
+
+        // 计算次日贡献留存
+
+        // 获取前日注册用户
+        $day_register_counts = DB::table('users')
+            ->whereBetween('created_at', $dates)
+            ->pluck('id');
+
+        // 获取前日注册用户在昨日获得的贡献值人数
+        $yesterday_has_contribution_counts = DB::table('user_profiles')
+            ->whereIn('user_id', $day_register_counts)
+            ->where('total_contributes', '!=', 0)
+            ->count();
+        $contribution = round($yesterday_has_contribution_counts / count($day_register_counts), 2) * 100;
+
+        $dimension = Dimension::firstOrNew([
+            'date' => (clone $date_format)->subDay()->toDateString(),
+            'name' => '次日贡献留存',
+            'value' => $contribution,
+            'group' => '次日留存用户',
+        ]);
+
+        $dimension->save();
+        echo '次日留存 - 贡献:' . $contribution . "\n";
     }
 
 }
