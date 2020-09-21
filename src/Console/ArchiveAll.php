@@ -48,6 +48,9 @@ class ArchiveAll extends Command
         //每日归档新用户激活漏斗
         $this->call("archive:user", ['--date' => $date, '--newUserActivation' => true]);
 
+        //每日更新新用户激活漏斗中的次日留存率
+        $this->call("archive:user", ['--date' => $date, '--updateNewUserActivation' => true]);
+
         //每日归档留存率
         $this->call("archive:retention", ['--date' => $date]);
 
