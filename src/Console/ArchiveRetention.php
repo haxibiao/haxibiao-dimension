@@ -378,21 +378,26 @@ class ArchiveRetention extends Command
         // 获取查询的时间区间
         $date_format = Carbon::make($date);
 
-        $dates = [(clone $date_format)->subDay(3)->toDateTimeString(), (clone $date_format)->subDay(2)->toDateTimeString()];
+        // 前日 19
+        $onTheDay = [(clone $date_format)->subDay(3)->toDateTimeString(), (clone $date_format)->subDay(2)->toDateTimeString()];
+        // 昨日 20
+        $yesterday = [(clone $date_format)->subDay(2)->toDateTimeString(), (clone $date_format)->subDay()->toDateTimeString()];
 
         // 计算次日贡献留存
 
         // 获取前日注册用户
         $day_register_counts = DB::table('users')
-            ->whereBetween('created_at', $dates)
+            ->whereBetween('created_at', $onTheDay)
             ->pluck('id');
 
         // 获取前日注册用户在昨日获得的贡献值人数
-        $yesterday_has_contribution_counts = DB::table('user_profiles')
+        $yesterday_has_contribution_counts = DB::table('gold')
+            ->select('user_id')
+            ->distinct()
             ->whereIn('user_id', $day_register_counts)
-            ->where('total_contributes', '!=', 0)
-            ->count();
-        $contribution = round($yesterday_has_contribution_counts / count($day_register_counts), 2) * 100;
+            ->whereBetween('created_at', $yesterday)
+            ->get();
+        $contribution = round(count($yesterday_has_contribution_counts) / count($day_register_counts), 2) * 100;
 
         $dimension = Dimension::firstOrNew([
             'date' => (clone $date_format)->subDay()->toDateString(),
