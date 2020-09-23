@@ -59,7 +59,7 @@ class Dimension extends Model
         return $dimension;
     }
 
-    public static function calculateRetention($date, $subDay, $column)
+    public static function calculateRetention($date, $subDay, $column, $isSave = true)
     {
         if (is_string($date)) {
             $date = Carbon::parse($date);
@@ -80,7 +80,9 @@ class Dimension extends Model
                 ->count(DB::raw(1));
             if (0 != $userRetentionNum) {
                 $next_day_result = sprintf('%.2f', ($userRetentionNum / $newRegistedNum) * 100);
-                cache()->store('database')->forever($next_day_key, $next_day_result);
+                if ($isSave) {
+                    cache()->store('database')->forever($next_day_key, $next_day_result);
+                }
                 return $next_day_result;
             }
         }
