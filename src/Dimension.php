@@ -63,6 +63,8 @@ class Dimension extends Model
     {
         if (is_string($date)) {
             $date = Carbon::parse($date);
+        } else {
+            $date = $date->copy();
         }
 
         $next_day_key = $column . '_' . $date->toDateString();
