@@ -4,7 +4,6 @@ namespace Haxibiao\Dimension\Console;
 
 use App\Invitation;
 use Carbon\Carbon;
-use Haxibiao\Base\User;
 use Haxibiao\Base\UserRetention;
 use Haxibiao\Dimension\Dimension;
 use Illuminate\Console\Command;
@@ -83,94 +82,24 @@ class ArchiveRetention extends Command
     {
         //注意：留存都是看前一天的
         $this->info('缓存留存率统计信息');
-        $endOfDay = Carbon::parse($date)->subDay(1);
 
         $this->info('统计次日留存数据中...');
         Dimension::calculateRetention($date, 2, 'day2_at');
 
-        //三日留存率
-        echo "\n - 三日留存率 ";
+        $this->info('统计三日留存率...');
+        Dimension::calculateRetention($date, 3, 'day3_at');
 
-        $date          = clone $endOfDay;
-        $third_day_key = 'day3_at_' . $date->toDateString();
-        if (!cache()->store('database')->get($third_day_key)) {
-            $third_day_registed_at = $date->subDay(3);
-            $dateRange             = [$third_day_registed_at, $third_day_registed_at->copy()->addDay()];
-            $newRegistedNum        = User::whereBetween('created_at', $dateRange)->count();
-            $userRetentionNum      = UserRetention::whereBetween('day3_at', $dateRange)->count();
-            if (0 != $userRetentionNum) {
-                $third_day_result = sprintf('%.2f', ($userRetentionNum / $newRegistedNum) * 100);
-                cache()->store('database')->forever($third_day_key, $third_day_result);
-                echo $third_day_result;
-            }
-        }
+        $this->info('统计五日留存率...');
+        Dimension::calculateRetention($date, 5, 'day5_at');
 
-        //五日留存率
-        echo "\n - 五日留存率 ";
+        $this->info('统计七日留存率...');
+        Dimension::calculateRetention($date, 7, 'day7_at');
 
-        $date          = clone $endOfDay;
-        $fifth_day_key = 'day5_at_' . $date->toDateString();
-        if (!cache()->store('database')->get($fifth_day_key)) {
-            $fifth_day_registed_at = $date->subDay(5);
-            $dateRange             = [$fifth_day_registed_at, $fifth_day_registed_at->copy()->addDay()];
-            $newRegistedNum        = User::whereBetween('created_at', $dateRange)->count();
-            $userRetentionNum      = UserRetention::whereBetween('day5_at', $dateRange)->count();
-            if (0 != $userRetentionNum) {
-                $fifth_day_result = sprintf('%.2f', ($userRetentionNum / $newRegistedNum) * 100);
-                cache()->store('database')->forever($fifth_day_key, $fifth_day_result);
-                echo $fifth_day_result;
-            }
-        }
+        $this->info('统计十五日留存率...');
+        Dimension::calculateRetention($date, 15, 'day15_at');
 
-        // 七日留存率
-        echo "\n - 七日留存率 ";
-
-        $date          = clone $endOfDay;
-        $sixth_day_key = 'day7_at_' . $date->toDateString();
-        if (!cache()->store('database')->get($sixth_day_key)) {
-            $sixth_day_registed_at = $date->subDay(7);
-            $dateRange             = [$sixth_day_registed_at, $sixth_day_registed_at->copy()->addDay()];
-            $newRegistedNum        = User::whereBetween('created_at', $dateRange)->count();
-            $userRetentionNum      = UserRetention::whereBetween('day7_at', $dateRange)->count();
-            if (0 != $userRetentionNum) {
-                $sixth_day_result = sprintf('%.2f', ($userRetentionNum / $newRegistedNum) * 100);
-                cache()->store('database')->forever($sixth_day_key, $sixth_day_result);
-                echo $sixth_day_result;
-            }
-        }
-
-        // 十五日留存率
-        echo "\n - 十五日留存率 ";
-
-        $date          = clone $endOfDay;
-        $sixth_day_key = 'day15_at_' . $date->toDateString();
-        if (!cache()->store('database')->get($sixth_day_key)) {
-            $sixth_day_registed_at = $date->subDay(15);
-            $dateRange             = [$sixth_day_registed_at, $sixth_day_registed_at->copy()->addDay()];
-            $newRegistedNum        = User::whereBetween('created_at', $dateRange)->count();
-            $userRetentionNum      = UserRetention::whereBetween('day15_at', $dateRange)->count();
-            if (0 != $userRetentionNum) {
-                $fifteen_day_result = sprintf('%.2f', ($userRetentionNum / $newRegistedNum) * 100);
-                cache()->store('database')->forever($sixth_day_key, $fifteen_day_result);
-                echo $fifteen_day_result;
-            }
-        }
-
-        //三十日留存率
-        echo "\n - 三十日留存率 ";
-        $date      = clone $endOfDay;
-        $month_key = 'day30_at_' . $date->toDateString();
-        if (!cache()->store('database')->get($month_key)) {
-            $month_registed_at = $date->subDay(30);
-            $dateRange         = [$month_registed_at, $month_registed_at->copy()->addDay()];
-            $newRegistedNum    = User::whereBetween('created_at', $dateRange)->count();
-            $userRetentionNum  = UserRetention::whereBetween('day30_at', $dateRange)->count();
-            if (0 != $userRetentionNum) {
-                $month_result = sprintf('%.2f', ($userRetentionNum / $newRegistedNum) * 100);
-                cache()->store('database')->forever($month_key, $month_result);
-                echo $month_result;
-            }
-        }
+        $this->info('统计三十日留存率...');
+        Dimension::calculateRetention($date, 30, 'day30_at');
     }
 
     /**

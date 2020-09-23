@@ -68,7 +68,7 @@ class Dimension extends Model
         }
 
         $next_day_key = $column . '_' . $date->toDateString();
-        $startDay     = $date->subDay($subDay);
+        $startDay     = $date->copy()->subDay($subDay);
         $endDay       = $startDay->copy()->addDay();
         $dateRange    = [$startDay, $endDay];
 
@@ -78,7 +78,7 @@ class Dimension extends Model
         $userRetentionNum   = User::whereBetween($userModel->getTable() . '.created_at', $dateRange)
             ->join($userRetentionModel->getTable(), function ($join) use ($userModel, $userRetentionModel) {
                 $join->on($userModel->getTable() . '.id', $userRetentionModel->getTable() . '.user_id');
-            })->whereBetween($userRetentionModel->getTable() . '.' . $column, [$endDay, $endDay->copy()->addDay()])
+            })->whereBetween($userRetentionModel->getTable() . '.' . $column, [$endDay, $date])
             ->count(DB::raw(1));
         if (0 != $userRetentionNum) {
             $next_day_result = sprintf('%.2f', ($userRetentionNum / $newRegistedNum) * 100);
