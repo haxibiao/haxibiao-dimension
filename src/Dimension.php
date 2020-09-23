@@ -69,22 +69,21 @@ class Dimension extends Model
         $startDay     = $date->subDay($subDay);
         $endDay       = $startDay->copy()->addDay();
         $dateRange    = [$startDay, $endDay];
-        if (!cache()->store('database')->get($next_day_key)) {
-            $userModel          = new User;
-            $userRetentionModel = new UserRetention;
-            $newRegistedNum     = User::whereBetween('created_at', $dateRange)->count(DB::raw(1));
-            $userRetentionNum   = User::whereBetween($userModel->getTable() . '.created_at', $dateRange)
-                ->join($userRetentionModel->getTable(), function ($join) use ($userModel, $userRetentionModel) {
-                    $join->on($userModel->getTable() . '.id', $userRetentionModel->getTable() . '.user_id');
-                })->whereBetween($userRetentionModel->getTable() . '.' . $column, [$endDay, $endDay->copy()->addDay()])
-                ->count(DB::raw(1));
-            if (0 != $userRetentionNum) {
-                $next_day_result = sprintf('%.2f', ($userRetentionNum / $newRegistedNum) * 100);
-                if ($isSave) {
-                    cache()->store('database')->forever($next_day_key, $next_day_result);
-                }
-                return $next_day_result;
+
+        $userModel          = new User;
+        $userRetentionModel = new UserRetention;
+        $newRegistedNum     = User::whereBetween('created_at', $dateRange)->count(DB::raw(1));
+        $userRetentionNum   = User::whereBetween($userModel->getTable() . '.created_at', $dateRange)
+            ->join($userRetentionModel->getTable(), function ($join) use ($userModel, $userRetentionModel) {
+                $join->on($userModel->getTable() . '.id', $userRetentionModel->getTable() . '.user_id');
+            })->whereBetween($userRetentionModel->getTable() . '.' . $column, [$endDay, $endDay->copy()->addDay()])
+            ->count(DB::raw(1));
+        if (0 != $userRetentionNum) {
+            $next_day_result = sprintf('%.2f', ($userRetentionNum / $newRegistedNum) * 100);
+            if ($isSave) {
+                cache()->store('database')->forever($next_day_key, $next_day_result);
             }
+            return $next_day_result;
         }
     }
 }
