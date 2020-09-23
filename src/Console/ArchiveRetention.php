@@ -82,24 +82,11 @@ class ArchiveRetention extends Command
     public function calculateRetention(String $date)
     {
         //注意：留存都是看前一天的
-        echo "\n缓存留存率统计信息";
+        $this->info('缓存留存率统计信息');
         $endOfDay = Carbon::parse($date)->subDay(1);
 
-        //次日留存率
-        echo "\n - 次日留存率 ";
-        $date         = clone $endOfDay;
-        $next_day_key = 'day2_at_' . $date->toDateString();
-        if (!cache()->store('database')->get($next_day_key)) {
-            $next_day_key_registed_at = $date->subDay(1);
-            $dateRange                = [$next_day_key_registed_at, $next_day_key_registed_at->copy()->addDay()];
-            $newRegistedNum           = User::whereBetween('created_at', $dateRange)->count();
-            $userRetentionNum         = UserRetention::whereBetween('day2_at', $dateRange)->count();
-            if (0 != $userRetentionNum) {
-                $next_day_result = sprintf('%.2f', ($userRetentionNum / $newRegistedNum) * 100);
-                cache()->store('database')->forever($next_day_key, $next_day_result);
-                echo $next_day_result;
-            }
-        }
+        $this->info('统计次日留存数据中...');
+        Dimension::calculateRetention($date, 2, 'day2_at');
 
         //三日留存率
         echo "\n - 三日留存率 ";
@@ -400,8 +387,8 @@ class ArchiveRetention extends Command
         $contribution = round(count($yesterday_has_contribution_counts) / count($day_register_counts), 2) * 100;
 
         $dimension = Dimension::firstOrNew([
-            'date' => (clone $date_format)->subDay()->toDateString(),
-            'name' => '次日贡献留存',
+            'date'  => (clone $date_format)->subDay()->toDateString(),
+            'name'  => '次日贡献留存',
             'value' => $contribution,
             'group' => '次日留存用户',
         ]);
@@ -409,5 +396,4 @@ class ArchiveRetention extends Command
         $dimension->save();
         echo '次日留存 - 贡献:' . $contribution . "\n";
     }
-
 }

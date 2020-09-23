@@ -2,7 +2,11 @@
 
 namespace Haxibiao\Dimension;
 
+use App\User;
 use Haxibiao\Base\Model;
+use Haxibiao\Base\UserRetention;
+use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\DB;
 
 class Dimension extends Model
 {
@@ -53,5 +57,32 @@ class Dimension extends Model
         }
 
         return $dimension;
+    }
+
+    public static function calculateRetention($date, $subDay, $column)
+    {
+        if (is_string($date)) {
+            $date = Carbon::parse($date);
+        }
+
+        $next_day_key = $column . '_' . $date->toDateString();
+        $startDay     = $date->subDay($subDay);
+        $endDay       = $startDay->copy()->addDay();
+        $dateRange    = [$startDay, $endDay];
+        if (!cache()->store('database')->get($next_day_key)) {
+            $userModel          = new User;
+            $userRetentionModel = new UserRetention;
+            $newRegistedNum     = User::whereBetween('created_at', $dateRange)->count(DB::raw(1));
+            $userRetentionNum   = User::whereBetween($userModel->getTable() . '.created_at', $dateRange)
+                ->join($userRetentionModel->getTable(), function ($join) use ($userModel, $userRetentionModel) {
+                    $join->on($userModel->getTable() . '.id', $userRetentionModel->getTable() . '.user_id');
+                })->whereBetween($userRetentionModel->getTable() . '.' . $column, [$endDay, $endDay->copy()->addDay()])
+                ->count(DB::raw(1));
+            if (0 != $userRetentionNum) {
+                $next_day_result = sprintf('%.2f', ($userRetentionNum / $newRegistedNum) * 100);
+                cache()->store('database')->forever($next_day_key, $next_day_result);
+                return $next_day_result;
+            }
+        }
     }
 }
