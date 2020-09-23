@@ -71,7 +71,7 @@ class ArchiveUser extends Command
         }
 
         if ($this->option('updateNewUserActivation')) {
-            $this->info("测试 ..." . $date);
+            $this->info("更新新用户激活数据次日留存率..." . $date);
             return $this->updateNewUserActivation($date);
         }
 
@@ -513,7 +513,7 @@ class ArchiveUser extends Command
     }
 
     /**
-     * 更新新用户激活数据
+     * 更新新用户激活数据次日留存率
      *
      * @param $date 用户创建时间
      */
@@ -548,7 +548,7 @@ class ArchiveUser extends Command
 
         $link_conversion_rate = round($answers_begin_second / $answers_begin, 2) * 100 . '%';
 
-        DB::update('update user_activation set second_link_conversion_rate = ? , action_count = ? where `date` = ? and `action` = ?', [$link_conversion_rate, $answers_begin, $date, '开始答题']);
+        DB::update('update user_activation set second_link_conversion_rate = ? where `date` = ? and `action` = ?', [$link_conversion_rate, $date, '开始答题']);
         echo '更新新用户激活漏斗 - 开始答题:' . $answers_begin . ' 日期:' . $date . "\n";
 
         // 完成 5 题
@@ -568,7 +568,7 @@ class ArchiveUser extends Command
 
         $link_conversion_rate = round($answers_5_second / $answers_5, 2) * 100 . '%';
 
-        DB::update('update user_activation set second_link_conversion_rate = ? , action_count = ? where `date` = ? and `action` = ?', [$link_conversion_rate, $answers_5, $date, '完成5题']);
+        DB::update('update user_activation set second_link_conversion_rate = ? where `date` = ? and `action` = ?', [$link_conversion_rate, $date, '完成5题']);
         echo '更新新用户激活漏斗 - 完成 5 题:' . $answers_5 . ' 日期:' . $date . "\n";
 
 
@@ -589,7 +589,7 @@ class ArchiveUser extends Command
 
         $link_conversion_rate = round($answers_6_second / $answers_6, 2) * 100 . '%';
 
-        DB::update('update user_activation set second_link_conversion_rate = ? , action_count = ? where `date` = ? and `action` = ?', [$link_conversion_rate, $answers_6, $date, '完成6题']);
+        DB::update('update user_activation set second_link_conversion_rate = ? where `date` = ? and `action` = ?', [$link_conversion_rate, $date, '完成6题']);
         echo '更新新用户激活漏斗 - 完成 6 题:' . $answers_6 . ' 日期:' . $date . "\n";
 
 
@@ -609,9 +609,8 @@ class ArchiveUser extends Command
 
         $link_conversion_rate = round($answers_10_second / $answers_10, 2) * 100 . '%';
 
-        DB::update('update user_activation set second_link_conversion_rate = ? , action_count = ? where `date` = ? and `action` = ?', [$link_conversion_rate, $answers_10, $date, '完成10题']);
+        DB::update('update user_activation set second_link_conversion_rate = ? where `date` = ? and `action` = ?', [$link_conversion_rate, $date, '完成10题']);
         echo '更新新用户激活漏斗 - 完成 10 题:' . $answers_10 . ' 日期:' . $date . "\n";
-
 
         // 完成提现
         // 前日注册用户并完成提现的用户主键
@@ -622,6 +621,7 @@ class ArchiveUser extends Command
         $withdraws_user_ids = DB::table('withdraws')
             ->whereIn('user_id', $newUserId)
             ->whereBetween('created_at', $newUserDates)
+            ->distinct()
             ->pluck('user_id');
 
         // 获取次日仍然提现的用户数量
@@ -638,7 +638,7 @@ class ArchiveUser extends Command
 
         $link_conversion_rate = round($withdraws / $before_withdraws, 2) * 100 . '%';
 
-        DB::update('update user_activation set second_link_conversion_rate = ? , action_count = ? where `date` = ? and `action` = ?', [$link_conversion_rate, $withdraws, $date, '完成提现']);
+        DB::update('update user_activation set second_link_conversion_rate = ? where `date` = ? and `action` = ?', [$link_conversion_rate, $withdraws, $date, '完成提现']);
 
         echo '更新新用户激活漏斗 - 完成提现:' . $withdraws . ' 日期:' . $date . "\n";
     }
