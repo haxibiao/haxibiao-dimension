@@ -84,22 +84,28 @@ class ArchiveRetention extends Command
         $this->info('缓存留存率统计信息');
 
         $this->info('统计次日留存数据中...');
-        Dimension::calculateRetention($date, 2, 'day2_at');
+        $result = Dimension::calculateRetention($date, 2, 'day2_at');
+        $this->info('统计次日留存数据结果:' . $result);
 
         $this->info('统计三日留存率...');
-        Dimension::calculateRetention($date, 3, 'day3_at');
+        $result = Dimension::calculateRetention($date, 3, 'day3_at');
+        $this->info('统计三日留存率结果:' . $result);
 
         $this->info('统计五日留存率...');
-        Dimension::calculateRetention($date, 5, 'day5_at');
+        $result = Dimension::calculateRetention($date, 5, 'day5_at');
+        $this->info('统计五日留存率结果:' . $result);
 
         $this->info('统计七日留存率...');
-        Dimension::calculateRetention($date, 7, 'day7_at');
+        $result = Dimension::calculateRetention($date, 7, 'day7_at');
+        $this->info('统计七日留存率结果:' . $result);
 
         $this->info('统计十五日留存率...');
-        Dimension::calculateRetention($date, 15, 'day15_at');
+        $result = Dimension::calculateRetention($date, 15, 'day15_at');
+        $this->info('统计十五日留存率结果:' . $result);
 
         $this->info('统计三十日留存率...');
-        Dimension::calculateRetention($date, 30, 'day30_at');
+        $result = Dimension::calculateRetention($date, 30, 'day30_at');
+        $this->info('统计三十日留存率结果:' . $result);
     }
 
     /**
