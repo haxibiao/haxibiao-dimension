@@ -15,7 +15,7 @@ class UserRetentionTrend extends Trend
     public function calculate(Request $request)
     {
         $range    = $request->range;
-        $endOfDay = Carbon::today()->subDay(1);
+        $endOfDay = Carbon::today();
         $data     = [];
         for ($i = 0; $i < 30; $i++) {
             $data[$endOfDay->toDateString()] = UserRetention::getCachedValue($range, $endOfDay->toDateString());
