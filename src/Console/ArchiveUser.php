@@ -2,12 +2,15 @@
 
 namespace Haxibiao\Dimension\Console;
 
+use App\Answer;
 use App\User;
 use App\UserActivation;
+use App\UserProfile;
 use Carbon\Carbon;
 use Illuminate\Console\Command;
 use Haxibiao\Dimension\Dimension;
 use Illuminate\Support\Facades\DB;
+use xin\helper\Arr;
 
 class ArchiveUser extends Command
 {
@@ -20,7 +23,8 @@ class ArchiveUser extends Command
     {--newuser : 新用户首日数据}
     {--categoryuser : 新老用户分类数据}
     {--newUserActivation : 新用户激活漏斗}
-    {--updateNewUserActivation : 更新新用户激活漏斗次日留存率}';
+    {--updateNewUserActivation : 更新新用户激活漏斗次日留存率}
+    {--avg : 平均答题趋势}';
 
     /**
      * 接受短信手机号
@@ -68,6 +72,11 @@ class ArchiveUser extends Command
         if ($this->option('newUserActivation')) {
             $this->info("维度归档统计: 新用户激活漏斗 ..." . $date);
             return $this->newUserActivation($date);
+        }
+
+        if ($this->option('avg')) {
+            $this->info('维度归档统计：分类用户平均答题趋势 ...' . $date);
+            return $this->avgAnswersByUserCreatedAt($date);
         }
 
         if ($this->option('updateNewUserActivation')) {
@@ -641,6 +650,50 @@ class ArchiveUser extends Command
         DB::update('update user_activation set second_link_conversion_rate = ? where `date` = ? and `action` = ?', [$link_conversion_rate, $withdraws, $date, '完成提现']);
 
         echo '更新新用户激活漏斗 - 完成提现:' . $withdraws . ' 日期:' . $date . "\n";
+    }
+
+
+    /**
+     * 用户平均答题数统计
+     *
+     * note: 用户筛选条件为新老用户, 暂定创建时间节点为 7 月 19 日
+     * @param $date
+     */
+    public function avgAnswersByUserCreatedAt($date)
+    {
+        $success_withdraw_type = [1,2,3];
+        $group_names = ['新用户', '老用户', '纯老用户'];
+        // 归档前天的数据
+        $yesterday = Carbon::parse($date)->subDay(1)->toDateString(); // 昨天
+        $before_yesterday = Carbon::parse($date)->subDay(2)->toDateString(); // 前天
+
+        for ($int = 0; $int < count($success_withdraw_type); $int ++) {
+
+            $users_count_db = DB::select('select count(DISTINCT(user_id)) as users_count from answer where user_id in (select id from user_profiles where success_withdraw_counts = ? and created_at >= "2020-07-19") and created_at BETWEEN ? and ?;', [$success_withdraw_type[$int], $before_yesterday . " 00:00:00", $yesterday . " 00:00:00"]);
+
+            $users_count = current($users_count_db)->users_count;
+            info($users_count);
+
+            // 获取答题数量
+            $answer_count_db = DB::select('select COUNT(*) as answer_count from answer where user_id in (select id from user_profiles where success_withdraw_counts = ? and created_at >= "2020-07-19") and created_at BETWEEN ? and ?;', [$success_withdraw_type[$int], $before_yesterday . " 00:00:00", $yesterday . " 00:00:00"]);
+
+            $sum_answer_count = current($answer_count_db)->answer_count;
+            info($sum_answer_count);
+
+
+            // 持久化
+            $avg = round($sum_answer_count / $users_count);
+
+            $dimension = Dimension::firstOrNew([
+                'group' => '用户平均答题趋势',
+                'name'  => $group_names[$int],
+                'date'  => $before_yesterday,
+            ]);
+            $dimension->value = $avg;
+            $dimension->save();
+            $this->info($group_names[$int] . "平均答题统计完成🍺");
+        }
+
     }
 
 
