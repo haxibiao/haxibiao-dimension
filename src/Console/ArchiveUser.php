@@ -654,32 +654,38 @@ class ArchiveUser extends Command
 
 
     /**
-     * 用户平均答题数统计
+     * 用户平均答题数统计(筛选条件: 新老用户)
      *
      * note: 用户筛选条件为新老用户, 暂定创建时间节点为 7 月 19 日
      * @param $date
      */
     public function avgAnswersByUserCreatedAt($date)
     {
-        $success_withdraw_type = [1,2,3];
-        $group_names = ['新用户', '老用户', '纯老用户'];
+        $success_withdraw_type = [0,1,2,3];
+        $group_names = ['纯新用户', '新用户', '老用户', '纯老用户'];
         // 归档前天的数据
         $yesterday = Carbon::parse($date)->subDay(1)->toDateString(); // 昨天
         $before_yesterday = Carbon::parse($date)->subDay(2)->toDateString(); // 前天
 
         for ($int = 0; $int < count($success_withdraw_type); $int ++) {
 
-            $users_count_db = DB::select('select count(DISTINCT(user_id)) as users_count from answer where user_id in (select id from user_profiles where success_withdraw_counts = ? and created_at >= "2020-07-19") and created_at BETWEEN ? and ?;', [$success_withdraw_type[$int], $before_yesterday . " 00:00:00", $yesterday . " 00:00:00"]);
+            // 纯新用户为 null ，因此区分了 SQL 语句
+            if (empty($success_withdraw_type[$int])) {
+                $users_count_db = DB::select('select count(DISTINCT(user_id)) as users_count from answer where user_id in (select id from user_profiles where success_withdraw_counts is null and created_at >= "2020-07-19") and created_at BETWEEN ? and ?;', [$before_yesterday . " 00:00:00", $yesterday . " 00:00:00"]);
+
+                // 获取答题数量
+                $answer_count_db = DB::select('select COUNT(*) as answer_count from answer where user_id in (select id from user_profiles where success_withdraw_counts is null and created_at >= "2020-07-19") and created_at BETWEEN ? and ?;', [$before_yesterday . " 00:00:00", $yesterday . " 00:00:00"]);
+
+            } else {
+                $users_count_db = DB::select('select count(DISTINCT(user_id)) as users_count from answer where user_id in (select id from user_profiles where success_withdraw_counts = ? and created_at >= "2020-07-19") and created_at BETWEEN ? and ?;', [$success_withdraw_type[$int], $before_yesterday . " 00:00:00", $yesterday . " 00:00:00"]);
+
+                // 获取答题数量
+                $answer_count_db = DB::select('select COUNT(*) as answer_count from answer where user_id in (select id from user_profiles where success_withdraw_counts = ? and created_at >= "2020-07-19") and created_at BETWEEN ? and ?;', [$success_withdraw_type[$int], $before_yesterday . " 00:00:00", $yesterday . " 00:00:00"]);
+            }
 
             $users_count = current($users_count_db)->users_count;
-            info($users_count);
-
-            // 获取答题数量
-            $answer_count_db = DB::select('select COUNT(*) as answer_count from answer where user_id in (select id from user_profiles where success_withdraw_counts = ? and created_at >= "2020-07-19") and created_at BETWEEN ? and ?;', [$success_withdraw_type[$int], $before_yesterday . " 00:00:00", $yesterday . " 00:00:00"]);
 
             $sum_answer_count = current($answer_count_db)->answer_count;
-            info($sum_answer_count);
-
 
             // 持久化
             $avg = round($sum_answer_count / $users_count);
