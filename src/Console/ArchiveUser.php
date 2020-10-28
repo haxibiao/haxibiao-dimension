@@ -490,9 +490,20 @@ class ArchiveUser extends Command
 
         echo '新用户激活漏斗 - 绑定提现账号:' . $bindOauthCount . ' 日期:' . $date . "\n";
 
+        $filed = '';
+        if (config('app.name') == 'datizhuanqian') {
+            $filed = 'user_id';
+        } else {
+            $filed = 'wallet_id';
+            //这里其实是wallet_id
+            $newUserId =  $newUserId = DB::table('wallets')
+                ->whereBetween('created_at', $dates)
+                ->pluck('id');
+        }
+
         // 完成提现
         $withdraws = DB::table('withdraws')
-            ->whereIn('user_id', $newUserId)
+            ->whereIn($filed, $newUserId)
             ->whereBetween('created_at', $dates)
             ->count();
 
