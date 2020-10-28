@@ -101,7 +101,6 @@ class ArchiveUser extends Command
                 $this->newUsersByHour($date, $i);
             }
         }
-
     }
 
     /**
@@ -141,9 +140,9 @@ class ArchiveUser extends Command
 
         $qb_first_day = DB::table('users')
             ->join('user_profiles', 'users.id', '=', 'user_profiles.user_id')
-        //开启下面留存条件就是次日流失用户了...
-        // ->join('user_retentions', 'users.id', '=', 'user_retentions.user_id')
-        // ->whereNull('user_retentions.day2_at')
+            //开启下面留存条件就是次日流失用户了...
+            // ->join('user_retentions', 'users.id', '=', 'user_retentions.user_id')
+            // ->whereNull('user_retentions.day2_at')
             ->whereBetween('users.created_at', $dates);
 
         $avgGold   = $qb_first_day->avg('gold') ?? 0;
@@ -197,13 +196,13 @@ class ArchiveUser extends Command
         $dimension->value = $zero_gold_count;
         $dimension->save();
         echo '新用户首日 - 零账单变动人数:' . $zero_gold_count . ' 日期:' . $date . "\n";
-
     }
 
     /**
      * 每天根据提现次数分类用户
      */
-    public function userCategoriesByDay($date){
+    public function userCategoriesByDay($date)
+    {
 
         // 归档昨天的数据
         $date = Carbon::parse($date)->subDay(1)->toDateString();
@@ -260,13 +259,13 @@ class ArchiveUser extends Command
         $dimension->value = $pureOldUserCount;
         $dimension->save();
         echo '新老用户分类活跃数 - 纯老用户:' . $pureOldUserCount . ' 日期:' . $date . "\n";
-
     }
 
     /**
      * 新用户激活漏斗数据归档
      */
-    public function newUserActivation($date){
+    public function newUserActivation($date)
+    {
         // 归档昨天的数据
         $date_format = Carbon::make($date);
         $day   = $date_format->toDateTimeString();
@@ -332,7 +331,7 @@ class ArchiveUser extends Command
 
         // 领取签到奖励
         $signInCount = DB::table('users')
-            ->where('gold','!=', 300)
+            ->where('gold', '!=', 300)
             ->whereBetween('created_at', $dates)
             ->count();
 
@@ -526,7 +525,8 @@ class ArchiveUser extends Command
      *
      * @param $date 用户创建时间
      */
-    public function updateNewUserActivation($date) {
+    public function updateNewUserActivation($date)
+    {
         // 格式化时间
         $date_format = Carbon::make($date);
 
@@ -623,25 +623,36 @@ class ArchiveUser extends Command
 
         // 完成提现
         // 前日注册用户并完成提现的用户主键
-        $newUserId = DB::table('users')
-            ->whereBetween('created_at', $newUserDates)
-            ->pluck('id');
+        //damei withdraws table  does not have the user_ID field
+        $filed = '';
+        $queryIds = null;
+        if (config('app.name') == 'datizhuanqian') {
+            $queryIds = DB::table('users')
+                ->whereBetween('created_at', $newUserDates)
+                ->pluck('id');
+            $filed = 'user_id';
+        } else {
+            $queryIds = DB::table('wallets')
+                ->whereBetween('created_at', $newUserDates)
+                ->pluck('id');
+            $filed = 'wallet_id';
+        }
 
         $withdraws_user_ids = DB::table('withdraws')
-            ->whereIn('user_id', $newUserId)
+            ->whereIn($filed, $queryIds)
             ->whereBetween('created_at', $newUserDates)
             ->distinct()
-            ->pluck('user_id');
+            ->pluck($filed);
 
         // 获取次日仍然提现的用户数量
         $withdraws = DB::table('withdraws')
-            ->whereIn('user_id', $withdraws_user_ids)
+            ->whereIn($filed, $withdraws_user_ids)
             ->whereBetween('created_at', $dates)
             ->count();
 
         // 获取前日提现用户数量
         $before_withdraws = DB::table('withdraws')
-            ->whereIn('user_id', $withdraws_user_ids)
+            ->whereIn($filed, $withdraws_user_ids)
             ->whereBetween('created_at', $newUserDates)
             ->count();
 
@@ -661,13 +672,13 @@ class ArchiveUser extends Command
      */
     public function avgAnswersByUserCreatedAt($date)
     {
-        $success_withdraw_type = [0,1,2,3];
+        $success_withdraw_type = [0, 1, 2, 3];
         $group_names = ['纯新用户', '新用户', '老用户', '纯老用户'];
         // 归档前天的数据
         $yesterday = Carbon::parse($date)->subDay(1)->toDateString(); // 昨天
         $before_yesterday = Carbon::parse($date)->subDay(2)->toDateString(); // 前天
 
-        for ($int = 0; $int < count($success_withdraw_type); $int ++) {
+        for ($int = 0; $int < count($success_withdraw_type); $int++) {
 
             // 纯新用户为 null ，因此区分了 SQL 语句
             if (empty($success_withdraw_type[$int])) {
@@ -675,7 +686,6 @@ class ArchiveUser extends Command
 
                 // 获取答题数量
                 $answer_count_db = DB::select('select COUNT(*) as answer_count from answer where user_id in (select id from user_profiles where success_withdraw_counts is null and created_at >= "2020-07-19") and created_at BETWEEN ? and ?;', [$before_yesterday . " 00:00:00", $yesterday . " 00:00:00"]);
-
             } else {
                 $users_count_db = DB::select('select count(DISTINCT(user_id)) as users_count from answer where user_id in (select id from user_profiles where success_withdraw_counts = ? and created_at >= "2020-07-19") and created_at BETWEEN ? and ?;', [$success_withdraw_type[$int], $before_yesterday . " 00:00:00", $yesterday . " 00:00:00"]);
 
@@ -699,7 +709,6 @@ class ArchiveUser extends Command
             $dimension->save();
             $this->info($group_names[$int] . "平均答题统计完成🍺");
         }
-
     }
 
 
