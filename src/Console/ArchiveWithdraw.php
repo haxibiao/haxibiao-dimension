@@ -46,6 +46,7 @@ class ArchiveWithdraw extends Command
         $this->info("归档提现相关的数据....");
         $date = $this->option('date') ?? today()->toDateString();
         $type = $this->option('type');
+
         if (is_null($type)) {
             $this->archiveLevel($date);
             $this->archiveStay($date);
@@ -57,6 +58,8 @@ class ArchiveWithdraw extends Command
             $this->archiveGold($date);
             $this->archiveContribute($date);
             $this->archiveTotal($date);
+            $this->archiveSecondWithdraw($date);
+            $this->archiveThirdWithdraw($date);
         } else {
             $type          = ucfirst($type);
             $archiveAction = "archive${type}";
