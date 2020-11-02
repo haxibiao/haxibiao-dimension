@@ -669,7 +669,7 @@ class ArchiveUser extends Command
 
         $link_conversion_rate = round($withdraws / $before_withdraws, 2) * 100 . '%';
 
-        DB::update('update user_activation set second_link_conversion_rate = ? where `date` = ? and `action` = ?', [$link_conversion_rate, $withdraws, $date, '完成提现']);
+        DB::update('update user_activation set second_link_conversion_rate = ? where `date` = ? and `action` = ?', [$link_conversion_rate, $date, '完成提现']);
 
         echo '更新新用户激活漏斗 - 完成提现:' . $withdraws . ' 日期:' . $date . "\n";
     }
