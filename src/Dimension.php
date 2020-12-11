@@ -33,6 +33,16 @@ class Dimension extends Model
         Dimension::track($name, 1, $group);
     }
 
+    public static function trackInviteView($name = "邀请页面", $group = "邀请展示")
+    {
+        Dimension::track($name, 1, $group);
+    }
+
+    public static function trackInviteClick($name = "邀请页面", $group = "邀请点击")
+    {
+        Dimension::track($name, 1, $group);
+    }
+
     //更新维度统计
     public static function track($name, int $value = 1, $group = null)
     {
