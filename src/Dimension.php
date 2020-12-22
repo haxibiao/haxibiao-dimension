@@ -43,7 +43,14 @@ class Dimension extends Model
         Dimension::track($name, 1, $group);
     }
 
-    //更新维度统计
+    /**
+     * 更新今日维度统计结果，主要汇总数据接口
+     *
+     * @param string $name 名称，如：百度蜘蛛抓取
+     * @param integer $value 数值，如：10020
+     * @param string $group 分组，如：SEO蜘蛛分析
+     * @return void
+     */
     public static function track($name, int $value = 1, $group = null)
     {
         $date = today()->toDateString();
@@ -69,6 +76,9 @@ class Dimension extends Model
         return $dimension;
     }
 
+    /**
+     * 计算留存
+     */
     public static function calculateRetention($date, $subDay, $column, $isSave = true)
     {
         if (is_string($date)) {

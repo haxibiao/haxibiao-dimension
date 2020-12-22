@@ -40,12 +40,23 @@ class InstallCommand extends Command
     public function handle()
     {
         $this->info("复制 stubs ...");
-        copy($this->resolveStubPath('/stubs/Dimension.stub'), app_path('Dimension.php'));
-
+        $this->copyStubs();
     }
 
-    protected function resolveStubPath($stub)
+    public function copyStubs()
     {
-        return __DIR__ . $stub;
+        //复制所有app stubs
+        foreach (glob(__DIR__ . '/stubs/*.stub') as $filepath) {
+            $filename = basename($filepath);
+            copy($filepath, app_path(str_replace(".stub", ".php", $filename)));
+        }
+        //复制所有nova stubs
+        if (!is_dir(app_path('Nova'))) {
+            mkdir(app_path('Nova'));
+        }
+        foreach (glob(__DIR__ . '/stubs/Nova/*.stub') as $filepath) {
+            $filename = basename($filepath);
+            copy($filepath, app_path('Nova/' . str_replace(".stub", ".php", $filename)));
+        }
     }
 }
