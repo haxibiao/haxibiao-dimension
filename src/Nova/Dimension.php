@@ -34,7 +34,7 @@ class Dimension extends Resource
         'name', 'group',
     ];
 
-    public static $group = "App配置&监控";
+    public static $group = "维度报表";
 
     public static function label()
     {
