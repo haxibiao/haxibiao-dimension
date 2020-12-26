@@ -2,8 +2,8 @@
 
 namespace Haxibiao\Dimension;
 
+use App\Model;
 use App\User;
-use Haxibiao\Base\Model;
 use Haxibiao\Base\UserRetention;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
