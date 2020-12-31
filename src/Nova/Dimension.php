@@ -8,7 +8,8 @@ use Laravel\Nova\Fields\DateTime;
 use Laravel\Nova\Fields\ID;
 use Laravel\Nova\Fields\Number;
 use Laravel\Nova\Fields\Text;
-
+use Haxibiao\Dimension\Nova\Metrics\SiteSpiderTrend;
+use Haxibiao\Dimension\Nova\Metrics\SiteTrafficTrend;
 class Dimension extends Resource
 {
     /**
@@ -87,6 +88,8 @@ class Dimension extends Resource
             // (new FullVideoPartition)->width('1/4'),
             // (new RewardVideoTrend)->width('1/4'),
             // (new FullVideoTrend)->width('1/4'),
+            (new SiteSpiderTrend)->width('1/4'),
+            (new SiteTrafficTrend)->width('1/4'),
         ];
     }
 
