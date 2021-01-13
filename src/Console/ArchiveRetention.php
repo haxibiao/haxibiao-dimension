@@ -4,7 +4,7 @@ namespace Haxibiao\Dimension\Console;
 
 use App\Invitation;
 use Carbon\Carbon;
-use Haxibiao\Base\UserRetention;
+use Haxibiao\Breeze\UserRetention;
 use Haxibiao\Dimension\Dimension;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\DB;

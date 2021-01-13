@@ -4,7 +4,7 @@ namespace Haxibiao\Dimension;
 
 use App\Model;
 use App\User;
-use Haxibiao\Base\UserRetention;
+use Haxibiao\Breeze\UserRetention;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 

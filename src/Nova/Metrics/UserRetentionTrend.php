@@ -2,7 +2,7 @@
 
 namespace Haxibiao\Dimension\Nova\Metrics;
 
-use Haxibiao\Base\UserRetention;
+use Haxibiao\Breeze\UserRetention;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 use Laravel\Nova\Metrics\Trend;
