@@ -12,7 +12,13 @@ class NewUserCounts extends Trend
 
     public $range = 7;
 
-    public $flip = false;
+    public $ranges = [
+        '平均智慧点'   => '平均智慧点',
+        '平均答题数'   => '平均答题数',
+        '最高答题数'   => '最高答题数',
+        '零答题行为人数' => '零答题行为人数',
+        '零账单变动人数' => '零账单变动人数',
+    ];
 
     /**
      * Calculate the value of the metric.
@@ -25,6 +31,7 @@ class NewUserCounts extends Trend
         $this->flip     = true;
         $name           = $request->range;
         $request->range = $this->range; // 先固定看7天的
+        $this->ranges   = [];
         $qb             = Dimension::whereGroup('新用户首日')->whereName($name);
         $result         = $this->averageByDays($request, $qb, 'value', 'date')->showLatestValue();
         $arr            = $result->trend;
@@ -43,20 +50,7 @@ class NewUserCounts extends Trend
      */
     public function ranges()
     {
-
-        $ranges = [
-            '平均智慧点'   => $this->range,
-            '平均答题数'   => $this->range,
-            '最高答题数'   => $this->range,
-            '零答题行为人数' => $this->range,
-            '零账单变动人数' => $this->range,
-        ];
-
-        if ($this->flip) {
-            $ranges = array_flip($ranges);
-        }
-
-        return $ranges;
+        return $this->ranges;
     }
 
     /**
@@ -66,7 +60,7 @@ class NewUserCounts extends Trend
      */
     public function cacheFor()
     {
-        // return 5;
+        return 5;
     }
 
     /**

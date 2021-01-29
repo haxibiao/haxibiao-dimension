@@ -12,7 +12,11 @@ class RetentionUser extends Trend
 
     public $range = 7;
 
-    public $flip = false;
+    public $ranges = [
+        '平均智慧点' => '平均智慧点',
+        '平均答题数' => '平均答题数',
+        '最高答题数' => '最高答题数',
+    ];
 
     /**
      * Calculate the value of the metric.
@@ -26,9 +30,9 @@ class RetentionUser extends Trend
         $name           = $request->range;
         $request->range = $this->range; // 先固定看7天的
         $qb             = Dimension::whereGroup('次日留存用户')->whereName($name);
-
-        $result = $this->averageByDays($request, $qb, 'value', 'date')->showLatestValue();
-        $arr    = $result->trend;
+        $this->ranges   = [];
+        $result         = $this->averageByDays($request, $qb, 'value', 'date')->showLatestValue();
+        $arr            = $result->trend;
         array_pop($arr);
         $yesterday = last($arr);
         $max       = max($arr);
@@ -44,17 +48,7 @@ class RetentionUser extends Trend
      */
     public function ranges()
     {
-        $ranges = [
-            '平均智慧点' => $this->range,
-            '平均答题数' => $this->range,
-            '最高答题数' => $this->range,
-        ];
-
-        if ($this->flip) {
-            $ranges = array_flip($ranges);
-        }
-
-        return $ranges;
+        return $this->ranges;
     }
 
     /**
@@ -64,7 +58,7 @@ class RetentionUser extends Trend
      */
     public function cacheFor()
     {
-        // return 5;
+        return 5;
     }
 
     /**

@@ -13,7 +13,11 @@ class SecondDayLostUser extends Trend
 
     public $range = 7;
 
-    public $flip = false;
+    public $ranges = [
+        '平均智慧点' => '平均智慧点',
+        '平均答题数' => '平均答题数',
+        '最高答题数' => '最高答题数',
+    ];
 
     /**
      * Calculate the value of the metric.
@@ -26,7 +30,8 @@ class SecondDayLostUser extends Trend
         $this->flip     = true;
         $name           = $request->range;
         $request->range = $this->range; // 先固定看7天的
-        $qb = Dimension::whereGroup('次日流失用户')->whereName($name);
+        $this->ranges   = [];
+        $qb             = Dimension::whereGroup('次日流失用户')->whereName($name);
 
         $result = $this->averageByDays($request, $qb, 'value', 'date')->showLatestValue();
         $arr    = $result->trend;
@@ -46,17 +51,7 @@ class SecondDayLostUser extends Trend
      */
     public function ranges()
     {
-        $ranges = [
-            '平均智慧点' => $this->range,
-            '平均答题数' => $this->range,
-            '最高答题数' => $this->range,
-        ];
-
-        if ($this->flip) {
-            $ranges = array_flip($ranges);
-        }
-
-        return $ranges;
+        return $this->ranges;
     }
 
     /**
