@@ -10,6 +10,8 @@ class RetentionUser extends Trend
 {
     public $name = '次日留存用户';
 
+    public $range = 7;
+
     /**
      * Calculate the value of the metric.
      *
@@ -40,9 +42,9 @@ class RetentionUser extends Trend
     public function ranges()
     {
         return [
-            '平均智慧点' => '平均智慧点',
-            '平均答题数' => '平均答题数',
-            '最高答题数' => '最高答题数',
+            $this->range => '平均智慧点',
+            $this->range => '平均答题数',
+            $this->range => '最高答题数',
         ];
     }
 
