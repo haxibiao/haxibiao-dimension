@@ -170,7 +170,7 @@ class ArchiveWithdraw extends Command
             foreach ($items as $item) {
                 $user                    = $item->user;
                 $profile                 = $user->profile;
-                $profile->comments_count = $profile->comments_count ?? $user->comments()->count();
+                $profile->comments_count = $profile->comments_count ?? $user->hasComments()->count();
                 $profile->saveDataOnly();
                 $count = $profile->comments_count;
                 $g     = '无评论';
