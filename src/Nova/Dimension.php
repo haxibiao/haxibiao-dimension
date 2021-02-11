@@ -3,46 +3,24 @@
 namespace Haxibiao\Dimension\Nova;
 
 use App\Nova\Resource;
+use Haxibiao\Dimension\Nova\Metrics\SiteSpiderTrend;
+use Haxibiao\Dimension\Nova\Metrics\SiteTrafficTrend;
 use Illuminate\Http\Request;
 use Laravel\Nova\Fields\DateTime;
 use Laravel\Nova\Fields\ID;
 use Laravel\Nova\Fields\Number;
 use Laravel\Nova\Fields\Text;
-use Haxibiao\Dimension\Nova\Metrics\SiteSpiderTrend;
-use Haxibiao\Dimension\Nova\Metrics\SiteTrafficTrend;
+
 class Dimension extends Resource
 {
-    /**
-     * The model the resource corresponds to.
-     *
-     * @var string
-     */
-    public static $model = 'App\Dimension';
-
-    /**
-     * The single value that should be used to represent the resource when being displayed.
-     *
-     * @var string
-     */
-    public static $title = 'name';
-
-    /**
-     * The columns that should be searched.
-     *
-     * @var array
-     */
+    public static $model  = 'App\Dimension';
+    public static $title  = 'name';
     public static $search = [
         'name', 'group',
     ];
 
-    public static $group = "维度报表";
-
+    public static $group = "数据中心";
     public static function label()
-    {
-        return '维度数据';
-    }
-
-    public static function singularLabel()
     {
         return '维度数据';
     }
